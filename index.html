@@ -297,8 +297,8 @@
             socket.on('partner_found', (data) => {
                 console.log('Partner found! Room ID:', data.roomId, 'Partner ID:', data.partnerId);
                 currentPartnerId = data.partnerId; // Store partner ID
-                initialMockup.classList.add('hidden');
-                actualChat.classList.remove('hidden');
+                initialMockup.classList.remove('hidden');
+                actualChat.classList.add('hidden');
                 actualChatMessages.innerHTML = ''; // Clear previous messages
                 appendMessage('You are now connected to a random stranger!', 'system');
                 actualChatInput.focus();
