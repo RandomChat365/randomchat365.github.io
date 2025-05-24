@@ -1,209 +1,240 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore'; // Import getFirestore even if not directly used for chat messages
 
-<!DOCTYPE html>
-<html prefix="og: http://ogp.me/ns#" dir="LTR" lang="en" >
-<head>
-	<link rel="icon" type="image/x-icon" href="/favicon.ico"/>
-	<link rel="apple-touch-icon" href="/apple-touch-icon-57x57.png"/>
-	<link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png" />
-	<link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png" />
-	<link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png" />
+// Ensure Tailwind CSS is loaded for styling
+// This comment is for context; Tailwind is assumed to be available in the Canvas environment.
 
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>Random Chat - Instant Chat with Strangers</title>
-	<meta name="theme-color" content="#ffffff">
-  <meta name="description" content="This is one on one random chat room. You can safely start chat and share pics without registration! This is a great omegle random text chat alternative."/>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="/manifest.json">
+function App() {
+  // State variables for Firebase and user authentication
+  const [db, setDb] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  <link rel="stylesheet" href="/css/default.css?b189" type="text/css" media="screen"/>
- 
-        <script src="/js/dark-theme.js?z16"></script>     
-      <link id="darkModeStylesheet" rel="stylesheet" href="/css/dark-mode.css?33" type="text/css" media="screen" >
-   
+  // State variables for chat functionality
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isChatting, setIsChatting] = useState(false);
+  const [partnerId, setPartnerId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // For initial loading state
 
-  <meta name="keywords" content="random chat, chat with strangers, stranger chat, chat random, roulette chat sites, omegle random text chat">
-        <meta property="og:image" content="https://www.chatblink.com/img/chatblink.jpg"/>
-        <meta property="og:title" content="Random Chat - Instant Chat with Strangers"/>
-        <meta property="og:url" content="https://www.chatblink.com/random-chat"/>
-        <meta property="og:site_name" content="www.chatblink.com"/>
-        <meta property="og:description" content="This is one on one random chat room. You can safely start chat and share pics without registration! This is a great omegle random text chat alternative."/>
-        <meta property="og:type" content="website"/>
-        <meta property="fb:app_id" content="193705257769448"/><link rel="amphtml" href="/amp/random-chat.html"/>        <script async src="https://fundingchoicesmessages.google.com/i/pub-8715958404542661?ers=1" nonce="9XHVnP-lLdNPLMHXCWMWGw"></script><script nonce="9XHVnP-lLdNPLMHXCWMWGw">(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();</script>
+  // Ref for auto-scrolling chat window
+  const messagesEndRef = useRef(null);
 
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8715958404542661" crossorigin="anonymous"></script> 
-        
-         
+  // Function to scroll to the bottom of the chat window
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> 
+  // Effect for Firebase initialization and authentication
+  useEffect(() => {
+    try {
+      // Access global variables provided by the Canvas environment
+      const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+      const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+      const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-</head>
-<body itemscope="" itemtype="http://schema.org/WebPage" class="random-chat_body">
-<header id="header">
-    <div id="navigation">
-        <a id="logo" title="ChatBlink.com" href="/"></a>
-                <div id="top-no-session">
-            <a id="sign_up_login" href="/">Sign In</a>  
-            <a id="dark-mode" href="#"><i id="darkModeIcon" class="fas fa-moon"></i><div>Dark</div></a> 
-        </div> 
+      // Initialize Firebase app
+      const app = initializeApp(firebaseConfig);
+      const firestoreDb = getFirestore(app);
+      const firebaseAuth = getAuth(app);
+
+      setDb(firestoreDb);
+      setAuth(firebaseAuth);
+
+      // Listen for authentication state changes
+      const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+        if (user) {
+          // User is signed in
+          setUserId(user.uid);
+          setIsAuthReady(true);
+          setIsLoading(false);
+        } else {
+          // No user is signed in, attempt anonymous sign-in or custom token sign-in
+          try {
+            if (initialAuthToken) {
+              await signInWithCustomToken(firebaseAuth, initialAuthToken);
+            } else {
+              await signInAnonymously(firebaseAuth);
+            }
+          } catch (error) {
+            console.error("Firebase authentication error:", error);
+            setIsLoading(false);
+          }
+        }
+      });
+
+      // Cleanup subscription on unmount
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error initializing Firebase:", error);
+      setIsLoading(false);
+    }
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  // Effect for auto-scrolling when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Function to start a new chat
+  const startChat = () => {
+    setMessages([]); // Clear previous messages
+    setPartnerId(`user-${Math.random().toString(36).substring(2, 9)}`); // Simulate a new partner ID
+    setIsChatting(true);
+    // In a real application, this would trigger a WebSocket connection
+    // to a backend service to find and connect to a real chat partner.
+  };
+
+  // Function to send a message
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (inputMessage.trim() && isChatting) {
+      const newMessage = {
+        id: Date.now(),
+        text: inputMessage,
+        sender: userId, // Current user's ID
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setInputMessage('');
+
+      // Simulate an immediate response from the "partner"
+      setTimeout(() => {
+        const partnerResponse = {
+          id: Date.now() + 1,
+          text: `Echo from ${partnerId}: "${newMessage.text}"`,
+          sender: partnerId,
+          timestamp: new Date().toLocaleTimeString(),
+        };
+        setMessages((prevMessages) => [...prevMessages, partnerResponse]);
+      }, 1000); // Simulate a 1-second delay for partner's response
+    }
+  };
+
+  // Function to find a new chat partner (disconnect current and start new)
+  const nextChat = () => {
+    setIsChatting(false);
+    setPartnerId(null);
+    setMessages([]);
+    startChat(); // Immediately start a new chat
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <p>Loading application...</p>
+      </div>
+    );
+  }
+
+  // Display user ID for debugging/identification in multi-user context (as per instructions)
+  const displayUserId = userId || 'N/A';
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-gray-100 font-inter flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col h-[80vh] sm:h-[70vh]">
+        <h1 className="text-3xl font-bold text-center mb-6 text-indigo-400">Random Chat</h1>
+
+        {/* Display User ID */}
+        <div className="text-sm text-gray-400 text-center mb-4">
+          Your User ID: <span className="font-mono text-indigo-300 break-all">{displayUserId}</span>
         </div>
 
-</header>
-<article>
-
-    <div id="container" class="random-chat_type">
-			<div class="body">
-    	<div id="ad-header-random-chat" class="ad-side">
- 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8715958404542661"
-       crossorigin="anonymous"></script>
-  <!-- chatblink - random-chat-inside -->
-  <ins class="adsbygoogle"
-       style="display:block"
-       data-ad-client="ca-pub-8715958404542661"
-       data-ad-slot="6246657696"
-       data-ad-format="auto"
-       data-full-width-responsive="true"></ins>
-  <script>
-       (adsbygoogle = window.adsbygoogle || []).push({});
-  </script>
-</div>
-    <div class="content">
-        <div class="content-padding">
-
-<div id="random-chat">
-    <div id="chatbox">
-        <div id="start" style="margin:auto;width: 100%;text-align: center;">
-            <div class="random-ad2"><small class="advertisements">Advertisements</small></div>
-            <div id="random-welcome">
-              <h1>Random Chat - Instant Chat with Strangers</h1> 
-                                <div id="random-chat-center">
-                      <label>
-                         Name:
-                        <input id="random_name" value="Stranger" maxlength="12"/></label>
-                      <button type="button" id="start-chat" class="btn-success">START CHAT</button>
+        {!isChatting ? (
+          <div className="flex-grow flex items-center justify-center">
+            <button
+              onClick={startChat}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            >
+              Start Chat
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Chat Window */}
+            <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-700 rounded-lg mb-4 custom-scrollbar">
+              {messages.length === 0 && (
+                <p className="text-center text-gray-400 italic">
+                  You've connected with <span className="font-bold text-indigo-300">{partnerId}</span>. Say hello!
+                </p>
+              )}
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === userId ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[70%] p-3 rounded-lg shadow-md ${
+                      msg.sender === userId
+                        ? 'bg-indigo-500 text-white rounded-br-none'
+                        : 'bg-gray-600 text-gray-100 rounded-bl-none'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.text}</p>
+                    <span className="block text-xs text-right mt-1 opacity-75">
+                      {msg.timestamp}
+                    </span>
                   </div>
-               
-              <h2>This is one on one random chat room. You can safely start chat and share pics without registration! This is a great omegle random text chat alternative.</h2>
-  
-              By starting random chat you agree to the <a href="/terms-of-use">Terms of Use</a> and <a href="/privacy-policy">Privacy policy</a> 
-              <br/>
-              You can also have a good time on <a href="/chat-rooms">chat rooms</a> and <a href="/talk-to-strangers">talk to strangers</a>. <br/>
-              We recommend you read our <a  href='/safe-chatting'>Safe Chatting Guide</a> to ensure a secure and enjoyable experience.
+                </div>
+              ))}
+              <div ref={messagesEndRef} /> {/* Scroll target */}
             </div>
-        </div>
-        <ul id="msgs"></ul>
+
+            {/* Message Input and Send Button */}
+            <form onSubmit={sendMessage} className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400"
+                disabled={!isChatting}
+              />
+              <button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-5 rounded-lg shadow-md transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                disabled={!isChatting || !inputMessage.trim()}
+              >
+                Send
+              </button>
+            </form>
+
+            {/* Next Chat Button */}
+            <button
+              onClick={nextChat}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            >
+              Next Chat
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Custom Scrollbar Style */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #374151; /* gray-700 */
+          border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #4f46e5; /* indigo-600 */
+          border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #4338ca; /* indigo-700 */
+        }
+      `}</style>
     </div>
-    <div id="chat">
-        <form id="random_chat" class="form-inline" accept-charset="utf-8">
-            <textarea rows="1" cols="50" class="input textarea" disabled placeholder="Type Message Here" id="msg"></textarea>
-            <button type="button" name="send" id="send_message" value="Send" class="btn-success" disabled>SEND</button>
-            <div id="more-buttons">
-                <button id="next-stranger" class="btn btn-success">New Chat</button>
-                 <button class="btn btn-warning" id="request_photo" type="button">Req Photo</button> 
-                <button class="btn btn-error report_random" id="report_random" type="button">Report</button>
-            </div>
-        </form>
+  );
+}
 
-    </div>
-</div>
-
- 
-
-<div class="modal" id="under" style="display:none;">
-  <div class="modal_bg"></div> 
-  <div class="modal-content" style="text-align:center;padding:15px;"> 
-  <span class="close">×</span>
-    <p>To continue, confirm you are <strong>18 or older</strong> and agree to our  <a href="/terms-of-use">Terms of Use</a> and <a href="/privacy-policy">Privacy Policy</a>.</p>
-    <button type="button" id="under-yes" style="float:none;" class="btn btn-success">Yes, I'm 18 or older!</button>
-  </div>
-</div> 
-<div class="modal" id="report_form" style="display:none;">
-  <div class="modal_bg"></div>
-  <div class="modal-content" style="padding: 10px;">
-    <span class="close">×</span>
-    <h2>Report User</h2>
-    <form id="reportForm"> 
-      <span>Reason for Reporting:</span><br>
-      <select id="reportReason" name="reportReason" required>
-      <option value="">-Select-</option>
-        <option value="spam">Spam</option>
-        <option value="harassment">Harassment</option>
-        <option value="hateSpeech">Hate Speech</option>
-        <option value="inappropriatecontent">Inappropriate content</option> 
-        <option value="other">Other</option>
-      </select><br> 
-
-      <label id="additionalDetails" style="display:none;">Additional Details (optional):
-      <input type="text" name="additionalDetails" maxlength="250">
-      </label><br>
-
-      <button type="submit" id="submitReport" class="btn btn-success">Submit Report</button>
-    </form>
-  </div>
-</div>
- 
-<link rel="stylesheet" href="/css/random-chat.css?v1" type="text/css" media="screen"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="/js/default-1.js?169"></script>
-
-<script src="https://ws.chatblink.com/socket.io/socket.io.js"></script>
-<script src="/js/murmur.js"></script>
-<script>
-var vpn = 0;var is_captha = 0;var ads_loadet = true;
-var timestamp = '1748106520';
-var token = '40c76fc9ecb6784cb57ac0af9b26ea2c';
-
-</script>
-
-<script src="/js/random-chat.js?v4"></script>
-
-
-</div>
-</div>
-
-<div class="right-block">
-                 <div class="clear"></div>
-</div>
-
-</div>
-</div>
-</article>
-
-<footer>
-    <div id="footer">
-        <div class="body">
-                        <div id="quick-search">
-                <a href="/random-chat" title="Random cha">Random Chat</a>
-                <a href="/talk-to-strangers" title="Talk To Strangers">Talk To Strangers</a>
-                <a href="/chat-rooms" title="Chat Rooms">Chat Rooms</a>
-            </div>
-   
-            </div>
-      			<div id="copyright">
-      					<ul id="footer_nav">
-      						<li><a href="/terms-of-use">Terms Of Use</a></li>
-      						<li><a href="/cookie-policy">Cookie Policy</a></li>
-      						<li><a href="/privacy-policy">Privacy Policy</a></li>
-      						<li><a href="/contact">Contact</a></li>
-      						      					</ul>
-          				<nav>&copy; 2025 ChatBlink
-      				</nav>
-      			</div>
-        </div>
-        <div id="sound"></div>
-
-
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-WQ4P6JCC66"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-WQ4P6JCC66');
-</script>
-
-</footer>
-</body>
-</html>
+export default App;
