@@ -1,240 +1,207 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'; // Import getFirestore even if not directly used for chat messages
-
-// Ensure Tailwind CSS is loaded for styling
-// This comment is for context; Tailwind is assumed to be available in the Canvas environment.
-
-function App() {
-  // State variables for Firebase and user authentication
-  const [db, setDb] = useState(null);
-  const [auth, setAuth] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
-
-  // State variables for chat functionality
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isChatting, setIsChatting] = useState(false);
-  const [partnerId, setPartnerId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // For initial loading state
-
-  // Ref for auto-scrolling chat window
-  const messagesEndRef = useRef(null);
-
-  // Function to scroll to the bottom of the chat window
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Effect for Firebase initialization and authentication
-  useEffect(() => {
-    try {
-      // Access global variables provided by the Canvas environment
-      const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-      const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-      const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-      // Initialize Firebase app
-      const app = initializeApp(firebaseConfig);
-      const firestoreDb = getFirestore(app);
-      const firebaseAuth = getAuth(app);
-
-      setDb(firestoreDb);
-      setAuth(firebaseAuth);
-
-      // Listen for authentication state changes
-      const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
-        if (user) {
-          // User is signed in
-          setUserId(user.uid);
-          setIsAuthReady(true);
-          setIsLoading(false);
-        } else {
-          // No user is signed in, attempt anonymous sign-in or custom token sign-in
-          try {
-            if (initialAuthToken) {
-              await signInWithCustomToken(firebaseAuth, initialAuthToken);
-            } else {
-              await signInAnonymously(firebaseAuth);
-            }
-          } catch (error) {
-            console.error("Firebase authentication error:", error);
-            setIsLoading(false);
-          }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandomChat365 - Talk to Strangers, Make Friends!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Dark background similar to the image */
+            color: #e0e0e0; /* Light text color */
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
-      });
+        .gradient-bg {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .hero-section {
+            position: relative;
+            z-index: 1;
+        }
+        .wave-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px; /* Adjust height as needed */
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%2316213e" fill-opacity="1" d="M0,192L48,181.3C96,171,192,149,288,149.3C384,149,480,171,576,176C672,181,768,171,864,160C960,149,1056,139,1152,144C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: bottom;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        /* Custom styles for chat mockups */
+        .chat-bubble {
+            background-color: #333;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Fully rounded */
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+        .chat-bubble-user {
+            background-color: #6a0dad; /* Purple */
+            color: white;
+            margin-left: auto; /* Align to right */
+        }
+        .country-flag {
+            width: 24px;
+            height: 16px;
+            border-radius: 3px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex flex-col">
 
-      // Cleanup subscription on unmount
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error initializing Firebase:", error);
-      setIsLoading(false);
-    }
-  }, []); // Empty dependency array ensures this runs once on mount
+    <nav class="p-4 md:p-6 flex items-center justify-between flex-wrap">
+        <div class="flex items-center flex-shrink-0 text-white mr-6">
+            <svg class="h-8 w-8 mr-2 text-purple-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.336-3.111A8.85 8.85 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9H7v2h2V9z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-semibold text-xl tracking-tight text-white">RandomChat365</span>
+        </div>
+        <div class="block lg:hidden">
+            <button id="nav-toggle" class="flex items-center px-3 py-2 border rounded text-purple-200 border-purple-400 hover:text-white hover:border-white">
+                <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
+            </button>
+        </div>
+        <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden" id="nav-content">
+            <div class="text-sm lg:flex-grow">
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                    Home
+                </a>
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                    Blog
+                </a>
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                    About
+                </a>
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white">
+                    Support
+                </a>
+            </div>
+            <div>
+                <a href="#" class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white hover:border-transparent hover:text-purple-500 hover:bg-white mt-4 lg:mt-0">Login</a>
+            </div>
+        </div>
+    </nav>
 
-  // Effect for auto-scrolling when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Function to start a new chat
-  const startChat = () => {
-    setMessages([]); // Clear previous messages
-    setPartnerId(`user-${Math.random().toString(36).substring(2, 9)}`); // Simulate a new partner ID
-    setIsChatting(true);
-    // In a real application, this would trigger a WebSocket connection
-    // to a backend service to find and connect to a real chat partner.
-  };
-
-  // Function to send a message
-  const sendMessage = (e) => {
-    e.preventDefault();
-    if (inputMessage.trim() && isChatting) {
-      const newMessage = {
-        id: Date.now(),
-        text: inputMessage,
-        sender: userId, // Current user's ID
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-      setInputMessage('');
-
-      // Simulate an immediate response from the "partner"
-      setTimeout(() => {
-        const partnerResponse = {
-          id: Date.now() + 1,
-          text: `Echo from ${partnerId}: "${newMessage.text}"`,
-          sender: partnerId,
-          timestamp: new Date().toLocaleTimeString(),
-        };
-        setMessages((prevMessages) => [...prevMessages, partnerResponse]);
-      }, 1000); // Simulate a 1-second delay for partner's response
-    }
-  };
-
-  // Function to find a new chat partner (disconnect current and start new)
-  const nextChat = () => {
-    setIsChatting(false);
-    setPartnerId(null);
-    setMessages([]);
-    startChat(); // Immediately start a new chat
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-        <p>Loading application...</p>
-      </div>
-    );
-  }
-
-  // Display user ID for debugging/identification in multi-user context (as per instructions)
-  const displayUserId = userId || 'N/A';
-
-  return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-inter flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col h-[80vh] sm:h-[70vh]">
-        <h1 className="text-3xl font-bold text-center mb-6 text-indigo-400">Random Chat</h1>
-
-        {/* Display User ID */}
-        <div className="text-sm text-gray-400 text-center mb-4">
-          Your User ID: <span className="font-mono text-indigo-300 break-all">{displayUserId}</span>
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-16 flex flex-col lg:flex-row items-center justify-center relative hero-section">
+        <div class="wave-bg"></div> <div class="lg:w-1/2 text-center lg:text-left mb-10 lg:mb-0 z-10">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-white">
+                Talk to strangers, <br> Make friends!
+            </h1>
+            <p class="text-lg md:text-xl mb-8 max-w-md mx-auto lg:mx-0 text-gray-300">
+                Experience a random chat alternative to find friends, connect with people, and chat with strangers from all over the world!
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="text-chat-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg flex items-center justify-center transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.336-3.111A8.85 8.85 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9H7v2h2V9z" clip-rule="evenodd"></path></svg>
+                    Text Chat
+                </button>
+                <button id="video-chat-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg flex items-center justify-center transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm4.553 1.355A1 1 0 017.182 7h5.636a1 1 0 01.63 1.645L12 11l-1.818 2.355a1 1 0 01-1.63-.001L8 11l-1.818 2.355a1 1 0 01-1.63-.001L4 11l-1.818 2.355A1 1 0 012 10.355V6z" clip-rule="evenodd"></path></svg>
+                    Video Chat
+                </button>
+            </div>
         </div>
 
-        {!isChatting ? (
-          <div className="flex-grow flex items-center justify-center">
-            <button
-              onClick={startChat}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-            >
-              Start Chat
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Chat Window */}
-            <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-700 rounded-lg mb-4 custom-scrollbar">
-              {messages.length === 0 && (
-                <p className="text-center text-gray-400 italic">
-                  You've connected with <span className="font-bold text-indigo-300">{partnerId}</span>. Say hello!
-                </p>
-              )}
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.sender === userId ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] p-3 rounded-lg shadow-md ${
-                      msg.sender === userId
-                        ? 'bg-indigo-500 text-white rounded-br-none'
-                        : 'bg-gray-600 text-gray-100 rounded-bl-none'
-                    }`}
-                  >
-                    <p className="text-sm">{msg.text}</p>
-                    <span className="block text-xs text-right mt-1 opacity-75">
-                      {msg.timestamp}
-                    </span>
-                  </div>
+        <div class="lg:w-1/2 flex justify-center lg:justify-end relative z-10">
+            <div class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
+                    <div class="flex -space-x-2 overflow-hidden">
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="User 1">
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="User 2">
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/333333/ffffff?text=T" alt="User 3">
+                    </div>
                 </div>
-              ))}
-              <div ref={messagesEndRef} /> {/* Scroll target */}
+
+                <div class="flex flex-col space-y-3 mb-6">
+                    <div class="flex items-start">
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 mr-2" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="Jon Snow">
+                        <div>
+                            <p class="text-sm font-semibold text-white">Jon Snow</p>
+                            <span class="chat-bubble text-sm text-gray-200">I don't know anything !</span>
+                        </div>
+                    </div>
+                    <div class="flex items-end justify-end">
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-white">TheLostWanderer</p>
+                            <span class="chat-bubble chat-bubble-user text-sm">Hello there!</span>
+                        </div>
+                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 ml-2" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="TheLostWanderer">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-4">
+                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+1" alt="Video Feed 1">
+                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+2" alt="Video Feed 2">
+                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+3" alt="Video Feed 3">
+                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+4" alt="Video Feed 4">
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-700">
+                    <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="flex items-center space-x-2">
+                            <img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag">
+                            <span>USA</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag">
+                            <span>Germany</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag">
+                            <span>India</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag">
+                            <span>Italy</span>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+    </main>
 
-            {/* Message Input and Send Button */}
-            <form onSubmit={sendMessage} className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400"
-                disabled={!isChatting}
-              />
-              <button
-                type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-5 rounded-lg shadow-md transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                disabled={!isChatting || !inputMessage.trim()}
-              >
-                Send
-              </button>
-            </form>
+    <footer class="p-4 text-center text-gray-500 text-sm mt-8">
+        &copy; 2025 RandomChat365. All rights reserved.
+    </footer>
 
-            {/* Next Chat Button */}
-            <button
-              onClick={nextChat}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-            >
-              Next Chat
-            </button>
-          </>
-        )}
-      </div>
+    <script>
+        // Simple JavaScript for button click messages
+        document.getElementById('text-chat-btn').addEventListener('click', function() {
+            alert('Text Chat functionality coming soon!');
+        });
 
-      {/* Custom Scrollbar Style */}
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
+        document.getElementById('video-chat-btn').addEventListener('click', function() {
+            alert('Video Chat functionality coming soon!');
+        });
+
+        // Toggle mobile navigation
+        document.getElementById('nav-toggle').addEventListener('click', function() {
+            let navContent = document.getElementById('nav-content');
+            navContent.classList.toggle('hidden');
+        });
+
+        // Custom alert function to replace window.alert
+        function alert(message) {
+            const alertBox = document.createElement('div');
+            alertBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            alertBox.innerHTML = `
+                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white text-center max-w-sm mx-auto">
+                    <p class="text-lg mb-4">${message}</p>
+                    <button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full" onclick="this.parentNode.parentNode.remove()">
+                        OK
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(alertBox);
         }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #374151; /* gray-700 */
-          border-radius: 10px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #4f46e5; /* indigo-600 */
-          border-radius: 10px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #4338ca; /* indigo-700 */
-        }
-      `}</style>
-    </div>
-  );
-}
-
-export default App;
+    </script>
+</body>
+</html>
