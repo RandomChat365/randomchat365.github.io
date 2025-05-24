@@ -251,8 +251,8 @@
                         <p class="text-xl font-semibold text-white">Connecting to a random stranger...</p>
                     </div>
                 `;
-                initialMockup.classList.remove('hidden');
-                actualChat.classList.add('hidden');
+                initialMockup.classList.add('hidden');
+                actualChat.classList.remove('hidden');
 
                 // Emit event to backend to join chat
                 socket.emit('join_chat');
