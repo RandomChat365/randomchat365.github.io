@@ -26,7 +26,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 200px; /* Adjust height as needed */
+            height: 100px; /* Default height for small screens */
             background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%2316213e" fill-opacity="1" d="M0,192L48,181.3C96,171,192,149,288,149.3C384,149,480,171,576,176C672,181,768,171,864,160C960,149,1056,139,1152,144C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
             background-repeat: no-repeat;
             background-size: cover;
@@ -60,9 +60,11 @@
             padding: 1rem;
             display: flex;
             flex-direction: column;
-            height: 300px; /* Fixed height for chat area */
+            min-height: 200px; /* Minimum height for chat area */
+            max-height: calc(100vh - 250px); /* Max height relative to viewport */
             overflow-y: auto; /* Scrollable chat area */
             border: 1px solid #374151;
+            flex-grow: 1; /* Allows it to grow within a flex parent */
         }
         .actual-chat-message {
             padding: 0.5rem 1rem;
@@ -91,6 +93,33 @@
             font-style: italic;
             font-size: 0.85rem;
             color: #a0aec0;
+        }
+
+        /* Media Queries for larger screens */
+        @media (min-width: 768px) { /* md breakpoint and up */
+            .wave-bg {
+                height: 200px; /* Increase wave height on larger screens */
+            }
+        }
+
+        @media (min-width: 1024px) { /* lg breakpoint and up */
+            .actual-chat-container {
+                height: 300px; /* Specific height for larger desktop screens */
+                max-height: none; /* Remove max-height constraint if fixed height is desired */
+            }
+        }
+
+        /* Adjust font sizes for very small screens if needed (example) */
+        @media (max-width: 400px) {
+            .hero-section h1 {
+                font-size: 2.5rem; /* Smaller heading on very small phones */
+            }
+            .hero-section p {
+                font-size: 1rem; /* Smaller paragraph text */
+            }
+            .chat-bubble, .actual-chat-message {
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
@@ -208,7 +237,7 @@
                 </div>
             </div>
 
-            <div id="actual-chat" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg hidden absolute top-0 left-0">
+            <div id="actual-chat" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg hidden absolute lg:relative lg:top-auto lg:left-auto">
                 <h2 class="text-xl font-semibold text-white mb-4 text-center">Random Chat</h2>
                 <div id="actual-chat-messages" class="actual-chat-container mb-4">
                 </div>
@@ -277,7 +306,7 @@
                 </div>
             `;
             initialMockup.classList.remove('hidden'); // Ensure mockup is visible
-            actualChat.classList.add('hidden');       // Ensure actual chat is hidden
+            actualChat.classList.add('hidden');        // Ensure actual chat is hidden
 
             // Emit event to backend to join chat
             socket.emit('join_chat');
@@ -325,7 +354,7 @@
 
             // *** IMPORTANT FIX: Show actual chat, hide initial mockup ***
             initialMockup.classList.add('hidden');    // HIDE the initial mockup
-            actualChat.classList.remove('hidden');  // SHOW the actual chat dialog
+            actualChat.classList.remove('hidden');    // SHOW the actual chat dialog
             // ************************************************************
 
             actualChatMessages.innerHTML = ''; // Clear previous messages
@@ -435,7 +464,7 @@
                             <span>India</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.co/it.svg" alt="Italy Flag">
+                            <img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag">
                             <span>Italy</span>
                         </div>
                     </div>
