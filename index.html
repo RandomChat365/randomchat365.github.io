@@ -355,8 +355,8 @@
 
             // Function to reset the UI to the initial state
             function resetChatInterface() {
-                actualChat.classList.add('hidden');
-                initialMockup.classList.remove('hidden');
+                actualChat.classList.remove('hidden');
+                initialMockup.classList.add('hidden');
                 // Re-populate initial mockup content
                 initialMockup.innerHTML = `
                     <div class="flex items-center justify-between mb-4">
@@ -415,3 +415,4 @@
         </script>
     </body>
     </html>
+
