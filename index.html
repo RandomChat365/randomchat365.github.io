@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RandomChat365 - Talk to Strangers, Make Friends!</title>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -53,6 +53,45 @@
             border-radius: 3px;
             object-fit: cover;
         }
+        /* Styles for the actual chat interface */
+        .actual-chat-container {
+            background-color: #1f2937; /* Darker gray for chat background */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            height: 300px; /* Fixed height for chat area */
+            overflow-y: auto; /* Scrollable chat area */
+            border: 1px solid #374151;
+        }
+        .actual-chat-message {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .actual-chat-message.user {
+            background-color: #6a0dad; /* Purple for user messages */
+            margin-left: auto;
+            text-align: right;
+            color: white;
+        }
+        .actual-chat-message.stranger {
+            background-color: #4a5568; /* Gray for stranger messages */
+            margin-right: auto;
+            text-align: left;
+            color: #e0e0e0;
+        }
+        .actual-chat-message.system {
+            background-color: #2d3748; /* Darker gray for system messages */
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            font-style: italic;
+            font-size: 0.85rem;
+            color: #a0aec0;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen flex flex-col">
@@ -71,16 +110,16 @@
         </div>
         <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden" id="nav-content">
             <div class="text-sm lg:flex-grow">
-                <a href="/" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                <a href="index.html" class="block mt-4 lg:inline-block lg:mt-0 text-white mr-4">
                     Home
                 </a>
-                <a href="/blog" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                <a href="blog.html" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
                     Blog
                 </a>
-                <a href="/about" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                <a href="about.html" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
                     About
                 </a>
-                <a href="/support" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white">
+                <a href="support.html" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white">
                     Support
                 </a>
             </div>
@@ -111,7 +150,7 @@
         </div>
 
         <div class="lg:w-1/2 flex justify-center lg:justify-end relative z-10">
-            <div class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg">
+            <div id="initial-mockup" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
                     <div class="flex -space-x-2 overflow-hidden">
@@ -144,65 +183,235 @@
                     </div>
                 </div>
 
-                <div class="mt-6 pt-4 border-t border-gray-700">
-                    <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
-                    <div class="grid grid-cols-2 gap-3 text-sm">
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag">
-                            <span>USA</span>
+                <div id="actual-chat" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg hidden">
+                    <h2 class="text-xl font-semibold text-white mb-4 text-center">Random Chat</h2>
+                    <div id="actual-chat-messages" class="actual-chat-container mb-4">
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag">
-                            <span>Germany</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag">
-                            <span>India</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag">
-                            <span>Italy</span>
-                        </div>
+                    <div class="flex">
+                        <input type="text" id="actual-chat-input" placeholder="Type your message..." class="flex-grow bg-gray-700 text-white p-3 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-600">
+                        <button id="actual-send-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-5 rounded-r-lg transition duration-300 ease-in-out">
+                            Send
+                        </button>
                     </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer class="p-4 text-center text-gray-500 text-sm mt-8">
-        &copy; 2025 RandomChat365. All rights reserved.
-    </footer>
-
-    <script>
-        // Simple JavaScript for button click messages
-        document.getElementById('text-chat-btn').addEventListener('click', function() {
-            alert('Text Chat functionality coming soon!');
-        });
-
-        document.getElementById('video-chat-btn').addEventListener('click', function() {
-            alert('Video Chat functionality coming soon!');
-        });
-
-        // Toggle mobile navigation
-        document.getElementById('nav-toggle').addEventListener('click', function() {
-            let navContent = document.getElementById('nav-content');
-            navContent.classList.toggle('hidden');
-        });
-
-        // Custom alert function to replace window.alert
-        function alert(message) {
-            const alertBox = document.createElement('div');
-            alertBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            alertBox.innerHTML = `
-                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white text-center max-w-sm mx-auto">
-                    <p class="text-lg mb-4">${message}</p>
-                    <button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full" onclick="this.parentNode.parentNode.remove()">
-                        OK
+                    <button id="actual-end-chat-btn" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full transition duration-300 ease-in-out">
+                        End Chat
                     </button>
                 </div>
-            `;
-            document.body.appendChild(alertBox);
-        }
-    </script>
-</body>
-</html>
+            </div>
+        </main>
+
+        <footer class="p-4 text-center text-gray-500 text-sm mt-8">
+            &copy; 2025 RandomChat365. All rights reserved.
+        </footer>
+
+        <script>
+            // Toggle mobile navigation
+            document.getElementById('nav-toggle').addEventListener('click', function() {
+                let navContent = document.getElementById('nav-content');
+                navContent.classList.toggle('hidden');
+            });
+
+            // Custom alert function to replace window.alert
+            function alert(message) {
+                const alertBox = document.createElement('div');
+                alertBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                alertBox.innerHTML = `
+                    <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white text-center max-w-sm mx-auto">
+                        <p class="text-lg mb-4">${message}</p>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full" onclick="this.parentNode.parentNode.remove()">
+                            OK
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(alertBox);
+            }
+
+            // --- Socket.IO Client-side Logic ---
+            // Connect to the Socket.IO server running on localhost:3000
+            // IMPORTANT: If you deploy your backend, replace 'http://localhost:3000' with your deployed backend URL.
+            const socket = io('http://localhost:3000');
+
+            const textChatBtn = document.getElementById('text-chat-btn');
+            const videoChatBtn = document.getElementById('video-chat-btn');
+            const initialMockup = document.getElementById('initial-mockup');
+            const actualChat = document.getElementById('actual-chat');
+            const actualChatMessages = document.getElementById('actual-chat-messages');
+            const actualChatInput = document.getElementById('actual-chat-input');
+            const actualSendBtn = document.getElementById('actual-send-btn');
+            const actualEndChatBtn = document.getElementById('actual-end-chat-btn');
+
+            let currentPartnerId = null; // To store the ID of the connected partner
+
+            // Event listener for "Text Chat" button
+            textChatBtn.addEventListener('click', () => {
+                // Show connecting state
+                initialMockup.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full py-20">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+                        <p class="text-xl font-semibold text-white">Connecting to a random stranger...</p>
+                    </div>
+                `;
+                initialMockup.classList.remove('hidden');
+                actualChat.classList.add('hidden');
+
+                // Emit event to backend to join chat
+                socket.emit('join_chat');
+            });
+
+            // Event listener for "Video Chat" button
+            videoChatBtn.addEventListener('click', function() {
+                alert('Video Chat functionality requires advanced WebRTC implementation and a robust backend. Coming soon!');
+            });
+
+            // Event listener for sending messages
+            actualSendBtn.addEventListener('click', sendMessage);
+            actualChatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Event listener for ending chat
+            actualEndChatBtn.addEventListener('click', endChat);
+
+            // --- Socket.IO Event Handlers ---
+
+            // When connected to the server
+            socket.on('connect', () => {
+                console.log('Connected to backend server:', socket.id);
+                // You might want to update a status indicator here
+            });
+
+            // When waiting for a partner
+            socket.on('waiting_for_partner', () => {
+                initialMockup.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full py-20">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+                        <p class="text-xl font-semibold text-white">Waiting for a chat partner...</p>
+                    </div>
+                `;
+                console.log('Waiting for a chat partner...');
+            });
+
+            // When a partner is found
+            socket.on('partner_found', (data) => {
+                console.log('Partner found! Room ID:', data.roomId, 'Partner ID:', data.partnerId);
+                currentPartnerId = data.partnerId; // Store partner ID
+                initialMockup.classList.add('hidden');
+                actualChat.classList.remove('hidden');
+                actualChatMessages.innerHTML = ''; // Clear previous messages
+                appendMessage('You are now connected to a random stranger!', 'system');
+                actualChatInput.focus();
+            });
+
+            // When a chat message is received
+            socket.on('chat_message', (data) => {
+                const senderType = (data.sender === socket.id) ? 'user' : 'stranger';
+                appendMessage(data.message, senderType);
+            });
+
+            // When the partner disconnects or ends the chat
+            socket.on('partner_disconnected', (data) => {
+                appendMessage(data.message || 'Your chat partner has disconnected.', 'system');
+                alert(data.message || 'Your chat partner has disconnected.');
+                resetChatInterface();
+            });
+
+            // When your own chat session ends (e.g., you clicked end chat)
+            socket.on('chat_ended', () => {
+                alert('Chat ended successfully.');
+                resetChatInterface();
+            });
+
+            // When disconnected from the server
+            socket.on('disconnect', () => {
+                console.log('Disconnected from backend server.');
+                alert('Disconnected from the chat server. Please try again.');
+                resetChatInterface();
+            });
+
+            // Function to append messages to the chat display
+            function appendMessage(text, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `actual-chat-message ${type}`;
+                messageDiv.textContent = text;
+                actualChatMessages.appendChild(messageDiv);
+                actualChatMessages.scrollTop = actualChatMessages.scrollHeight; // Scroll to bottom
+            }
+
+            // Function to send a message
+            function sendMessage() {
+                const messageText = actualChatInput.value.trim();
+                if (messageText) {
+                    socket.emit('chat_message', { message: messageText });
+                    actualChatInput.value = ''; // Clear input
+                }
+            }
+
+            // Function to end the chat
+            function endChat() {
+                socket.emit('end_chat');
+            }
+
+            // Function to reset the UI to the initial state
+            function resetChatInterface() {
+                actualChat.classList.add('hidden');
+                initialMockup.classList.remove('hidden');
+                // Re-populate initial mockup content
+                initialMockup.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
+                        <div class="flex -space-x-2 overflow-hidden">
+                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="User 1">
+                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="User 2">
+                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/333333/ffffff?text=T" alt="User 3">
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-3 mb-6">
+                        <div class="flex items-start">
+                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 mr-2" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="Jon Snow">
+                            <div>
+                                <p class="text-sm font-semibold text-white">Jon Snow</p>
+                                <span class="chat-bubble text-sm text-gray-200">I don't know anything !</span>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-end">
+                            <div class="text-right">
+                                <p class="text-sm font-semibold text-white">TheLostWanderer</p>
+                                <span class="chat-bubble chat-bubble-user text-sm">Hello there!</span>
+                            </div>
+                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 ml-2" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="TheLostWanderer">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+1" alt="Video Feed 1">
+                            <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+2" alt="Video Feed 2">
+                            <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+3" alt="Video Feed 3">
+                            <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+4" alt="Video Feed 4">
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-700">
+                        <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="flex items-center space-x-2">
+                                <img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag">
+                                <span>USA</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag">
+                                <span>Germany</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag">
+                                <span>India</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <img class="country-flag" src="https://flagcdn.co/it.svg" alt="Italy Flag">
+                                <span>Italy</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        </script>
+    </body>
+    </html>
