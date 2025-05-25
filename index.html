@@ -49,7 +49,7 @@
 
         <div id="chatSection" class="hidden flex-grow flex flex-col">
             <div id="messagesContainer" class="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-700 rounded-lg mb-4 custom-scrollbar">
-                </div>
+            </div>
 
             <div class="flex flex-col sm:flex-row gap-2 mb-4">
                 <button id="suggestIcebreakerButton"
@@ -361,7 +361,10 @@
 
         // Function to call Gemini API for text generation
         const callGeminiApi = async (prompt) => {
-            const apiKey = ""; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
+            // IMPORTANT: If you want to use models other than gemini-2.0-flash,
+            // or if you hit rate limits with the default, provide an API key here.
+            // Otherwise, leave this as-is.
+            const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             let chatHistory = [];
@@ -504,42 +507,23 @@
 
 
         // Firebase Initialization and Authentication
-    // ... (rest of your imports and global variables)
+        window.onload = async function() {
+            try {
+                // Your Firebase configuration object
+                // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDm4xiubyMVvmp-l84h7GYIhWbsepfhToY",
+                    authDomain: "randomchat365-e66a9.firebaseapp.com",
+                    projectId: "randomchat365-e66a9",
+                    storageBucket: "randomchat365-e66a9.firebasestorage.app",
+                    messagingSenderId: "932355688919",
+                    appId: "1:932355688919:web:54f01ecbc8891360c5e392",
+                    measurementId: "G-NHB99TPWE5"
+                };
 
-    // Firebase Initialization and Authentication
-    window.onload = async function() {
-        try {
-            // Your Firebase configuration object
-            const firebaseConfig = {
-                apiKey: "AIzaSyDm4xiubyMVvmp-l84h7GYIhWbsepfhToY",
-                authDomain: "randomchat365-e66a9.firebaseapp.com",
-                projectId: "randomchat365-e66a9",
-                storageBucket: "randomchat365-e66a9.firebasestorage.app",
-                messagingSenderId: "932355688919",
-                appId: "1:932355688919:web:54f01ecbc8891360c5e392",
-                measurementId: "G-NHB99TPWE5"
-            };
+                // Assign the global appId from your firebaseConfig
+                appId = firebaseConfig.appId;
 
-            // Assign the global appId from your firebaseConfig
-            appId = firebaseConfig.appId; // <--- This line is the crucial fix!
-
-            // Define Firestore collection paths using appId
-            CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
-            USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
-
-            // Initialize Firebase app
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            // ... (rest of your onAuthStateChanged and event listeners)
-
-        } catch (error) {
-            console.error("Error initializing Firebase:", error);
-            userIdDisplay.textContent = 'Error initializing Firebase';
-        }
-    };
-</script>
                 // Define Firestore collection paths using appId
                 CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
                 USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
@@ -563,7 +547,10 @@
                     } else {
                         // No user is signed in, attempt anonymous sign-in or custom token sign-in
                         try {
-                            if (initialAuthToken) {
+                            // initialAuthToken is typically only set by a backend for custom auth
+                            // For this client-side only app, it will likely be undefined,
+                            // leading to signInAnonymously being called.
+                            if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
                                 await signInWithCustomToken(auth, initialAuthToken);
                             } else {
                                 await signInAnonymously(auth);
