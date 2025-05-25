@@ -350,28 +350,33 @@
             try {
                 // Access global variables provided by the Canvas environment
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+                // The __firebase_config variable is for specific hosting environments.
+                // We're now providing the config directly for broader compatibility.
                 let firebaseConfig;
 
-                try {
-                    firebaseConfig = JSON.parse(firebaseConfigString);
-                } catch (e) {
-                    console.error("Error parsing Firebase config:", e);
-                    userIdDisplay.textContent = 'Invalid Firebase Config JSON';
-                    return; // Stop execution if config JSON is invalid
-                }
+                // YOUR FIREBASE CONFIGURATION GOES HERE
+                firebaseConfig = {
+                    apiKey: "AIzaSyDm4xiubyMVvmp-l84h7GYIhWbsepfhToY",
+                    authDomain: "randomchat365-e66a9.firebaseapp.com",
+                    projectId: "randomchat365-e66a9",
+                    storageBucket: "randomchat365-e66a9.firebasestorage.app",
+                    messagingSenderId: "932355688919",
+                    appId: "1:932355688919:web:54f01ecbc8891360c5e392",
+                    measurementId: "G-NHB99TPWE5"
+                };
 
                 // Check if the parsed config is empty or lacks essential properties
                 if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
                     console.error("Firebase configuration is missing essential properties (apiKey, projectId).");
                     userIdDisplay.textContent = 'Firebase Config Missing/Invalid. Cannot connect.';
-                    // Optionally, provide a fallback for local testing if you have a known config
-                    // firebaseConfig = { /* your local firebase config here */ };
                     return; // Stop execution if config is missing
                 }
 
 
                 // Define Firestore collection paths using appId
+                // It's good practice to ensure appId is correctly set before using it in paths
+                // If __app_id isn't available, the 'default-app-id' will be used,
+                // or you could use a fixed string directly if you don't need app-specific paths.
                 CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
                 USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
 
@@ -394,7 +399,10 @@
                     } else {
                         // No user is signed in, attempt anonymous sign-in or custom token sign-in
                         try {
-                            if (initialAuthToken) {
+                            // `initialAuthToken` is typically provided by a server-side authentication process.
+                            // If you're running this purely client-side without a custom token provider,
+                            // `signInAnonymously` is the way to go.
+                            if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
                                 await signInWithCustomToken(auth, initialAuthToken);
                             } else {
                                 await signInAnonymously(auth);
