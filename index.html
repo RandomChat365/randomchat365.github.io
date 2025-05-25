@@ -60,9 +60,9 @@
     <div id="app-container" class="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col h-[80vh] sm:h-[70vh]">
         <h1 class="text-3xl font-bold text-center mb-6 text-indigo-400">Live Random Chat</h1>
 
-        <div id="userInfoSection" class="text-sm text-gray-400 text-center mb-4">
-            <span id="userIdDisplay" class="font-mono text-indigo-300 hidden"></span>
-            </div>
+        <div id="userInfoSection" class="text-sm text-gray-400 text-center mb-4 hidden">
+            <span id="userIdDisplay" class="font-mono text-indigo-300"></span>
+        </div>
 
         <div id="nicknameSection" class="flex-grow flex items-center justify-center flex-col p-4 space-y-4">
             <label for="nicknameInput" class="text-lg text-gray-300">Choose your nickname:</label>
@@ -177,7 +177,7 @@
         let userNickname = "Stranger"; // Default nickname
         let currentChatId = null; // ID of the current chat document
         let chatUnsubscribe = null; // To unsubscribe from chat messages listener
-        let userStatusUnsubscribe = null; // To unsubscribe from user status listener
+        let userStatusUnsubscribe = null; // To unsubscribe from user status listener (for waiting state)
         let appId; // Global variable for the application ID
         let messages = []; // Correctly defined globally here
         let isAgeConfirmed = false;
@@ -315,8 +315,10 @@
             const userDocRef = doc(db, USERS_ONLINE_COLLECTION_PATH, userId);
             try {
                 if (status === 'online') {
+                    // Add/update user as online with their nickname
                     await setDoc(userDocRef, { timestamp: Date.now(), nickname: userNickname || "Stranger" });
                 } else if (status === 'offline') {
+                    // Remove user from online list
                     await deleteDoc(userDocRef);
                 }
             } catch (error) {
@@ -337,6 +339,7 @@
             if (currentChatId) {
                 try {
                     const chatDocRef = doc(db, CHATS_COLLECTION_PATH, currentChatId);
+                    // Mark the chat as ended, but don't delete immediately to preserve history
                     await updateDoc(chatDocRef, { status: 'ended' });
                 } catch (error) {
                     console.error("Error ending chat:", error);
@@ -348,12 +351,13 @@
 
             // Reset UI to nickname entry
             nicknameSection.classList.remove('hidden');
-            waitingMessage.classList.add('hidden');
+            waitingMessage.classList.add('hidden'); // Hide waiting message
             chatSection.classList.add('hidden');
             userInfoSection.classList.add('hidden'); // Hide user info during setup
-            setNicknameButton.textContent = 'Start Chat'; // Ensure button text is "Start Chat" for new session
+            setNicknameButton.textContent = 'Start Chat'; // Reset button text
 
-            updateUserOnlineStatus('offline'); // Ensure user is removed from online list
+            // Ensure user is removed from online list if they were there (e.g., if chat just ended)
+            await updateUserOnlineStatus('offline');
         };
 
         // Function to find or create a chat
@@ -367,35 +371,37 @@
                 return;
             }
 
-            endCurrentChat(); // Clear previous chat state and reset UI to base before searching
+            // Always call endCurrentChat to clean up previous state and UI
+            await endCurrentChat();
 
+            // Set UI to "waiting" state
             nicknameSection.classList.add('hidden');
-            userInfoSection.classList.add('hidden'); // Hide info during waiting
-            waitingMessage.classList.remove('hidden'); // Show "Finding stranger..."
+            userInfoSection.classList.add('hidden');
+            waitingMessage.classList.remove('hidden');
+            waitingMessage.textContent = "Finding a stranger..."; // Ensure this message is displayed
             chatSection.classList.add('hidden');
             setNicknameButton.textContent = 'Finding Stranger...'; // Update button text temporarily
 
 
             try {
-                // First, try to find an active partner in the `users_online` collection
-                // We're looking for ANY user online, excluding ourselves.
+                // 1. Try to find an existing waiting partner
                 const usersOnlineRef = collection(db, USERS_ONLINE_COLLECTION_PATH);
-                const q = query(usersOnlineRef, limit(1)); // Just get one
+                // Query for any user online, excluding ourselves, ordered by timestamp to pick the oldest waiting user
+                const q = query(usersOnlineRef, where(doc.id, '!=', userId), limit(1)); // More robust query
                 const onlineUsersSnapshot = await getDocs(q);
 
                 let foundPartnerId = null;
                 let foundPartnerNickname = null;
 
-                for (const docSnapshot of onlineUsersSnapshot.docs) {
-                    if (docSnapshot.id !== userId) { // Don't match with self
-                        foundPartnerId = docSnapshot.id;
-                        foundPartnerNickname = docSnapshot.data().nickname || 'Stranger';
-                        break;
-                    }
+                if (!onlineUsersSnapshot.empty) {
+                    const partnerDoc = onlineUsersSnapshot.docs[0];
+                    foundPartnerId = partnerDoc.id;
+                    foundPartnerNickname = partnerDoc.data().nickname || 'Stranger';
                 }
 
                 if (foundPartnerId) {
                     // Found a partner, create a new chat document
+                    console.log(`Found partner: ${foundPartnerNickname} (${foundPartnerId})`);
                     const newChatRef = await addDoc(collection(db, CHATS_COLLECTION_PATH), {
                         users: {
                             [userId]: userNickname,
@@ -405,19 +411,22 @@
                         status: 'active'
                     });
                     currentChatId = newChatRef.id;
+                    console.log(`Created chat: ${currentChatId}`);
 
-                    // Immediately remove both users from the online waiting list
+                    // Remove both users from the online waiting list immediately
                     await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, foundPartnerId));
-                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId));
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId)); // Self-remove just in case
 
                     startListeningToChat();
 
                 } else {
                     // No partner found, add self to waiting list
+                    console.log("No partner found, adding self to online list.");
                     await updateUserOnlineStatus('online'); // This adds us to `users_online` with our nickname
-                    waitingMessage.textContent = "Finding a stranger...";
+                    waitingMessage.textContent = "Finding a stranger..."; // Keep this message visible
 
-                    // Listen for incoming chats that include this user
+                    // 2. Listen for incoming chats that include this user
+                    // This listener will detect if another user creates a chat with us
                     const chatsRef = collection(db, CHATS_COLLECTION_PATH);
                     const qUserChats = query(
                         chatsRef,
@@ -425,25 +434,39 @@
                         where("status", "==", "active")
                     );
 
+                    // Unsubscribe from any previous chat listener for this user before setting up a new one
+                    if (chatUnsubscribe) {
+                        chatUnsubscribe();
+                        chatUnsubscribe = null;
+                    }
+
                     chatUnsubscribe = onSnapshot(qUserChats, (snapshot) => {
                         snapshot.docChanges().forEach(async (change) => {
-                            if (change.type === 'added' || (change.type === 'modified' && change.doc.data().status === 'active')) {
-                                const chatData = change.doc.data();
-                                if (chatData.users.hasOwnProperty(userId)) { // Double-check we are part of this chat
-                                    currentChatId = change.doc.id;
-                                    startListeningToChat();
-                                    // Once a chat is established, ensure we are removed from the waiting list
-                                    await updateUserOnlineStatus('offline');
-                                    if (userStatusUnsubscribe) {
-                                        userStatusUnsubscribe();
-                                        userStatusUnsubscribe = null; // Stop listening to online users
+                            const chatData = change.doc.data();
+                            if (chatData.users.hasOwnProperty(userId)) { // Ensure the chat involves us
+                                if (change.type === 'added' || (change.type === 'modified' && chatData.status === 'active')) {
+                                    if (currentChatId === null || currentChatId !== change.doc.id) { // Avoid processing the same chat repeatedly
+                                        currentChatId = change.doc.id;
+                                        console.log(`Joined chat: ${currentChatId}`);
+                                        startListeningToChat();
+                                        // Once a chat is established, ensure we are removed from the waiting list
+                                        await updateUserOnlineStatus('offline');
+                                        if (userStatusUnsubscribe) {
+                                            userStatusUnsubscribe();
+                                            userStatusUnsubscribe = null; // Stop listening to online users
+                                        }
                                     }
+                                } else if (change.type === 'modified' && chatData.status === 'ended' && change.doc.id === currentChatId) {
+                                    // If current chat is marked as ended by partner
+                                    console.log(`Chat ${change.doc.id} ended by partner.`);
+                                    endCurrentChat(); // This will clean up and put user back in initial state
                                 }
-                            } else if (change.type === 'modified' && change.doc.data().status === 'ended' && change.doc.id === currentChatId) {
-                                // If current chat is marked as ended by partner
-                                endCurrentChat(); // This will trigger a new search if the user initiated it
                             }
                         });
+                    }, (error) => {
+                        console.error("Error listening for user chats:", error);
+                        // Potentially revert to nickname entry on error
+                        endCurrentChat();
                     });
                 }
             } catch (error) {
@@ -458,7 +481,7 @@
         const startListeningToChat = () => {
             if (!currentChatId || !db || !CHATS_COLLECTION_PATH) return;
 
-            // Unsubscribe from any previous chat listener
+            // Unsubscribe from any previous chat message listener
             if (chatUnsubscribe) {
                 chatUnsubscribe();
                 chatUnsubscribe = null;
@@ -630,7 +653,6 @@
         setNicknameButton.addEventListener('click', () => {
             const nickname = nicknameInput.value.trim();
             userNickname = nickname === "" ? "Stranger" : nickname; // Set default if empty
-            // userIdDisplay.textContent = `You are: ${userNickname}`; // Updated when chat starts
             findOrCreateChat(); // Initiate chat after setting nickname and age confirmation
         });
 
@@ -734,8 +756,9 @@
                 });
 
                 // Handle user leaving the page
-                window.addEventListener('beforeunload', () => {
-                    updateUserOnlineStatus('offline');
+                window.addEventListener('beforeunload', async () => {
+                    // This will attempt to mark user offline right before the page closes
+                    await updateUserOnlineStatus('offline');
                     if (chatUnsubscribe) chatUnsubscribe();
                     if (userStatusUnsubscribe) userStatusUnsubscribe();
                 });
