@@ -44,6 +44,31 @@
         .message-animation {
             animation: fadeInSlideIn 0.3s ease-out;
         }
+
+        /* Added animations for overall UI */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInSlideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInSlideInUp 0.7s ease-out forwards;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-900 to-black text-gray-100 flex flex-col items-center justify-center p-4">
@@ -85,7 +110,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables for Firebase instances and user state
@@ -95,9 +120,10 @@
         let userId = null;
         let currentChatId = null; // ID of the current chat document
         let chatUnsubscribe = null; // To unsubscribe from chat messages listener
-        let userStatusUnsubscribe = null; // To unsubscribe from user status listener
-        let appId; // Global variable for the application ID
-        let messages = []; // Correctly defined globally here
+        let userStatusUnsubscribe = null; // To unsubscribe from user status listener (for waiting list)
+        let chatIncomingUnsubscribe = null; // To unsubscribe from listener for incoming chats (when waiting)
+        let appId; // Global variable for the application ID (or a default)
+        let messages = []; // Array to hold current chat messages
 
         // DOM Elements
         const userIdDisplay = document.getElementById('userIdDisplay');
@@ -111,18 +137,23 @@
         const sendMessageButton = document.getElementById('sendMessageButton');
         const nextChatButton = document.getElementById('nextChatButton');
 
-        // Firestore collection paths (public data as per instructions)
+        // Firestore collection paths
+        // Using a dynamic path for 'artifacts' to keep data separate for different app deployments/users
+        // If not using a specific 'Canvas' environment that sets __app_id, 'default-anonchat-app' will be used.
         let CHATS_COLLECTION_PATH;
         let USERS_ONLINE_COLLECTION_PATH;
 
-        // Function to scroll to the bottom of the chat window
+        // --- Helper Functions ---
+
+        // Scrolls the message container to the bottom to show latest messages
         const scrollToBottom = () => {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         };
 
-        // Function to render messages in the UI
+        // Renders messages in the UI
         const renderMessages = () => {
             messagesContainer.innerHTML = ''; // Clear existing messages
+            // Display an initial message when a chat starts and there are no messages yet
             if (messages.length === 0 && currentChatId) {
                 const initialMessage = document.createElement('p');
                 initialMessage.className = 'text-center text-gray-400 italic text-sm animate-fade-in';
@@ -132,11 +163,11 @@
 
             messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
-                // Determine alignment based on sender type (user or partner)
                 let alignmentClass = '';
                 let bubbleClass = '';
                 let senderName = '';
 
+                // Determine message alignment and style based on sender
                 if (msg.senderId === userId) {
                     alignmentClass = 'justify-end';
                     bubbleClass = 'bg-indigo-600 text-white rounded-br-none';
@@ -147,34 +178,39 @@
                     senderName = 'Partner';
                 }
 
-                messageDiv.className = `flex ${alignmentClass} message-animation`;
+                messageDiv.className = `flex ${alignmentClass} message-animation`; // Apply animation
 
                 const messageBubble = document.createElement('div');
                 messageBubble.className = `max-w-[75%] p-3 rounded-lg shadow-md ${bubbleClass} flex flex-col`;
 
+                // Display sender name (You/Partner)
                 const senderSpan = document.createElement('span');
                 senderSpan.className = `text-xs mb-1 ${msg.senderId === userId ? 'text-indigo-200' : 'text-gray-300'} font-semibold`;
                 senderSpan.textContent = senderName;
 
+                // Display message text
                 const messageText = document.createElement('p');
-                messageText.className = 'text-sm break-words';
+                messageText.className = 'text-sm break-words'; // Ensures long words wrap
                 messageText.textContent = msg.text;
 
+                // Display timestamp
                 const messageTimestamp = document.createElement('span');
                 messageTimestamp.className = 'block text-xs text-right mt-1 opacity-75 text-gray-300';
                 messageTimestamp.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-
+                // Assemble the message bubble
                 messageBubble.appendChild(senderSpan);
                 messageBubble.appendChild(messageText);
                 messageBubble.appendChild(messageTimestamp);
                 messageDiv.appendChild(messageBubble);
                 messagesContainer.appendChild(messageDiv);
             });
-            scrollToBottom();
+            scrollToBottom(); // Always scroll to the bottom after rendering
         };
 
-        // Function to update user's online status in Firestore
+        // Updates the user's online status in Firestore
+        // 'online': adds/updates user to 'users_online' collection
+        // 'offline': removes user from 'users_online' collection
         const updateUserOnlineStatus = async (status) => {
             if (!userId || !db || !USERS_ONLINE_COLLECTION_PATH) return;
             const userDocRef = doc(db, USERS_ONLINE_COLLECTION_PATH, userId);
@@ -182,15 +218,22 @@
                 if (status === 'online') {
                     await setDoc(userDocRef, { timestamp: Date.now() });
                 } else if (status === 'offline') {
-                    await deleteDoc(userDocRef);
+                    // Only attempt to delete if the user document exists to avoid unnecessary writes/errors
+                    const docSnap = await getDocs(query(collection(db, USERS_ONLINE_COLLECTION_PATH), where('__name__', '==', userId)));
+                    if (!docSnap.empty) {
+                        await deleteDoc(userDocRef);
+                    }
                 }
             } catch (error) {
                 console.error("Error updating user online status:", error);
             }
         };
 
-        // Function to end the current chat
+        // --- Core Chat Logic Functions ---
+
+        // Ends the current chat session, unsubscribes listeners, and resets UI
         const endCurrentChat = async () => {
+            // 1. Unsubscribe all active Firebase listeners to prevent memory leaks/ghost connections
             if (chatUnsubscribe) {
                 chatUnsubscribe();
                 chatUnsubscribe = null;
@@ -199,47 +242,60 @@
                 userStatusUnsubscribe();
                 userStatusUnsubscribe = null;
             }
+            if (chatIncomingUnsubscribe) {
+                chatIncomingUnsubscribe();
+                chatIncomingUnsubscribe = null;
+            }
+
+            // 2. Update the status of the current chat document in Firestore (if one exists)
             if (currentChatId) {
                 try {
-                    // Mark the chat as ended
                     const chatDocRef = doc(db, CHATS_COLLECTION_PATH, currentChatId);
                     await updateDoc(chatDocRef, { status: 'ended', endedAt: Date.now() });
+                    console.log(`Chat ${currentChatId} marked as ended.`);
                 } catch (error) {
                     console.error("Error ending chat:", error);
                 }
             }
+            
+            // 3. Reset global state variables
             currentChatId = null;
             messages = []; // Clear messages array
-            renderMessages(); // Clear messages from UI
+
+            // 4. Reset UI to initial "Start Chat" state
+            renderMessages(); // Clears messages from UI
             initialSection.classList.remove('hidden');
             startChatButton.classList.remove('hidden');
             waitingMessage.classList.add('hidden');
             chatSection.classList.add('hidden');
-            updateUserOnlineStatus('offline'); // Ensure user is removed from online list
+            messageInput.value = ''; // Clear message input field
+
+            // 5. Explicitly remove the user from the 'online' list
+            await updateUserOnlineStatus('offline');
+            console.log("User status set to offline after ending chat.");
         };
 
-
-        // Function to find or create a chat
+        // Finds an existing chat partner or adds the user to a waiting list to be matched
         const findOrCreateChat = async () => {
             if (!userId || !db || !CHATS_COLLECTION_PATH || !USERS_ONLINE_COLLECTION_PATH) {
                 console.error("Firebase not initialized or userId not set.");
                 return;
             }
 
-            // Clear previous chat state and reset UI
-            endCurrentChat(); // This will clear 'messages' and reset UI elements
+            // Always clean up previous chat state before starting a new one
+            await endCurrentChat();
 
+            // Update UI to indicate searching/waiting state
             initialSection.classList.remove('hidden');
             startChatButton.classList.add('hidden');
             waitingMessage.classList.remove('hidden');
             chatSection.classList.add('hidden');
-            messageInput.value = ''; // Clear message input on new chat attempt
-
+            waitingMessage.textContent = "Searching for a partner...";
 
             try {
-                // Look for an available partner
+                // 1. Attempt to find an available chat partner
                 const usersOnlineRef = collection(db, USERS_ONLINE_COLLECTION_PATH);
-                // Query for users online, excluding self, ordered by timestamp to find the oldest
+                // Query for users online, excluding self, ordered by timestamp to find the oldest waiting user
                 const q = query(usersOnlineRef, where('__name__', '!=', userId), orderBy('timestamp'), limit(1));
                 const onlineUsersSnapshot = await getDocs(q);
 
@@ -249,93 +305,122 @@
                 }
 
                 if (foundPartnerId) {
-                    // Found a partner, create a new chat
+                    console.log(`Found partner: ${foundPartnerId}. Creating chat.`);
+                    // 2. If a partner is found, create a new chat document
                     const newChatRef = await addDoc(collection(db, CHATS_COLLECTION_PATH), {
                         users: [userId, foundPartnerId],
                         createdAt: Date.now(),
                         status: 'active'
                     });
                     currentChatId = newChatRef.id;
-                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, foundPartnerId)); // Remove partner from waiting list
-                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId)); // Remove self from waiting list if was there
-                    startListeningToChat();
+
+                    // Immediately remove both users from the 'users_online' collection
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, foundPartnerId));
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId)); // Self removal
+
+                    console.log(`Chat ${currentChatId} created. Starting chat listener.`);
+                    startListeningToChat(); // Begin listening to messages for the new chat
                 } else {
-                    // No partner found, add self to waiting list
+                    console.log("No partner found. Going online to wait for one.");
+                    // 3. If no partner is found, add the current user to the 'users_online' waiting list
                     await updateUserOnlineStatus('online');
-                    // Listen for any chat documents that include the current user
+
+                    // 4. Set up a listener to detect when another user creates a chat with this user
                     const chatsRef = collection(db, CHATS_COLLECTION_PATH);
-                    const qUserChats = query(chatsRef, where("users", "array-contains", userId), where("status", "==", "active"));
+                    const qUserIncomingChats = query(chatsRef,
+                                                       where("users", "array-contains", userId),
+                                                       where("status", "==", "active"));
                     
-                    chatUnsubscribe = onSnapshot(qUserChats, (snapshot) => {
+                    // Unsubscribe previous incoming chat listener before setting a new one
+                    if (chatIncomingUnsubscribe) {
+                        chatIncomingUnsubscribe();
+                    }
+
+                    chatIncomingUnsubscribe = onSnapshot(qUserIncomingChats, (snapshot) => {
                         snapshot.docChanges().forEach(change => {
-                            if (change.type === 'added' || (change.type === 'modified' && change.doc.data().status === 'active')) {
-                                const chatData = change.doc.data();
-                                if (chatData.users.includes(userId) && !currentChatId) { // Only connect if no chat is active
-                                    currentChatId = change.doc.id;
-                                    startListeningToChat();
-                                    // Ensure we remove ourselves from the online list once a chat is established
-                                    updateUserOnlineStatus('offline');
-                                    if (userStatusUnsubscribe) {
-                                        userStatusUnsubscribe();
-                                        userStatusUnsubscribe = null;
-                                    }
+                            const chatData = change.doc.data();
+                            // If a new active chat involving this user is added or modified to active, and we're not already in a chat
+                            if ((change.type === 'added' || change.type === 'modified') &&
+                                chatData.status === 'active' &&
+                                chatData.users.includes(userId) &&
+                                !currentChatId // IMPORTANT: Only connect if we don't already have an active chat ID
+                            ) {
+                                console.log(`Incoming chat found: ${change.doc.id}`);
+                                currentChatId = change.doc.id;
+                                startListeningToChat(); // Start message listener for this new chat
+                                // Once matched, remove self from the online waiting list
+                                updateUserOnlineStatus('offline');
+                                // Unsubscribe from the incoming chat listener as we are now in a chat
+                                if (chatIncomingUnsubscribe) {
+                                    chatIncomingUnsubscribe();
+                                    chatIncomingUnsubscribe = null;
                                 }
-                            } else if (change.type === 'modified' && change.doc.data().status === 'ended' && change.doc.id === currentChatId) {
-                                // If current chat is marked as ended by partner
-                                endCurrentChat();
+                                // Also unsubscribe from the general user status listener if it was active
+                                if (userStatusUnsubscribe) {
+                                    userStatusUnsubscribe();
+                                    userStatusUnsubscribe = null;
+                                }
+                            } else if (change.type === 'modified' && chatData.status === 'ended' && change.doc.id === currentChatId) {
+                                // If the current chat is marked as ended by the partner
+                                console.log(`Current chat ${currentChatId} marked as ended by partner.`);
+                                endCurrentChat(); // End the chat from our side as well
                             }
                         });
                     }, (error) => {
-                        console.error("Error listening for user chats:", error);
+                        console.error("Error listening for incoming user chats:", error);
                         endCurrentChat(); // End chat on listener error
                     });
                 }
             } catch (error) {
                 console.error("Error finding or creating chat:", error);
                 waitingMessage.textContent = "Error finding partner. Please try again.";
-                startChatButton.classList.remove('hidden');
+                startChatButton.classList.remove('hidden'); // Show start button again
+                waitingMessage.classList.add('hidden'); // Hide waiting message on error
             }
         };
 
-        // Function to start listening to chat messages
+        // Starts listening for messages within the `currentChatId`
         const startListeningToChat = () => {
             if (!currentChatId || !db || !CHATS_COLLECTION_PATH) return;
 
-            // Unsubscribe from any previous chat listener
+            // Ensure all previous listeners are unsubscribed
             if (chatUnsubscribe) {
                 chatUnsubscribe();
                 chatUnsubscribe = null;
             }
-            // Unsubscribe from user status listener if active (it's handled in findOrCreateChat as well)
             if (userStatusUnsubscribe) {
                 userStatusUnsubscribe();
                 userStatusUnsubscribe = null;
+            }
+            if (chatIncomingUnsubscribe) {
+                chatIncomingUnsubscribe();
+                chatIncomingUnsubscribe = null;
             }
 
             // Hide initial section, show chat section
             initialSection.classList.add('hidden');
             chatSection.classList.remove('hidden');
+            console.log(`Now listening to messages for chat ID: ${currentChatId}`);
 
-            // Listen for messages in the current chat, ordered by timestamp
+            // Set up a real-time listener for messages in the current chat, ordered by timestamp
             const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
             chatUnsubscribe = onSnapshot(query(messagesRef, orderBy('timestamp', 'asc')), (snapshot) => {
                 const newMessages = [];
                 snapshot.forEach(doc => {
                     newMessages.push({ id: doc.id, ...doc.data() });
                 });
-                // Messages are already sorted by Firestore query
-                messages = newMessages;
-                renderMessages();
+                messages = newMessages; // Update global messages array
+                renderMessages(); // Re-render UI with new messages
             }, (error) => {
                 console.error("Error listening to messages:", error);
-                // Handle chat ending due to error, maybe go back to start screen
+                // If there's an error during message listening, assume chat issue and end it.
                 endCurrentChat();
             });
         };
 
-        // Function to send a message
+        // Handles sending a message when the form is submitted
         const sendMessage = async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevent default form submission behavior (page reload)
             const inputVal = messageInput.value.trim();
             if (inputVal && currentChatId && userId) {
                 try {
@@ -345,29 +430,28 @@
                         senderId: userId,
                         timestamp: Date.now()
                     });
-                    messageInput.value = ''; // Clear input field
+                    messageInput.value = ''; // Clear input field after sending
                 } catch (error) {
                     console.error("Error sending message:", error);
                 }
             }
         };
 
-        // Event Listeners
+        // --- Event Listeners ---
         startChatButton.addEventListener('click', findOrCreateChat);
         messageForm.addEventListener('submit', sendMessage);
-        nextChatButton.addEventListener('click', findOrCreateChat); // Next chat also finds/creates a new one
+        nextChatButton.addEventListener('click', findOrCreateChat); // "Next Chat" acts like "Start Chat"
 
 
-        // Firebase Initialization and Authentication
+        // --- Firebase Initialization on Window Load ---
         window.onload = async function() {
             try {
-                // Access global variables provided by the Canvas environment (if applicable)
+                // Determine appId - falls back to a default if not provided by environment
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'default-anonchat-app';
                 
-                let firebaseConfig;
-
                 // YOUR FIREBASE CONFIGURATION GOES HERE
-                firebaseConfig = {
+                // Replace with your actual Firebase project credentials
+                const firebaseConfig = {
                     apiKey: "AIzaSyDm4xiubyMVvmp-l84h7GYIhWbsepfhToY",
                     authDomain: "randomchat365-e66a9.firebaseapp.com",
                     projectId: "randomchat365-e66a9",
@@ -377,58 +461,58 @@
                     measurementId: "G-NHB99TPWE5"
                 };
 
-                // Check if the parsed config is empty or lacks essential properties
+                // Basic validation for Firebase config
                 if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
                     console.error("Firebase configuration is missing essential properties (apiKey, projectId).");
                     userIdDisplay.textContent = 'Firebase Config Missing/Invalid. Cannot connect.';
-                    return; // Stop execution if config is missing
+                    return; // Stop execution if config is invalid
                 }
 
-                // Define Firestore collection paths using appId
+                // Set Firestore collection paths using the determined appId
                 CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
                 USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
 
-                // Initialize Firebase app
+                // Initialize Firebase services
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Listen for authentication state changes
+                // Listen for Firebase Authentication state changes
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // User is signed in
+                        // User is signed in (either new anonymous or existing)
                         userId = user.uid;
                         userIdDisplay.textContent = userId;
-                        // Initial state: show start chat button
+                        // Set initial UI state: show start chat button
                         initialSection.classList.remove('hidden');
                         startChatButton.classList.remove('hidden');
                         waitingMessage.classList.add('hidden');
                         chatSection.classList.add('hidden');
                     } else {
-                        // No user is signed in, attempt anonymous sign-in or custom token sign-in
+                        // No user signed in, attempt anonymous sign-in
                         try {
-                            if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
+                            // Using signInAnonymously if no custom token is provided
+                            await signInAnonymously(auth);
                         } catch (error) {
-                            console.error("Firebase authentication error:", error);
-                            userIdDisplay.textContent = 'Error getting User ID';
+                            console.error("Firebase anonymous authentication error:", error);
+                            userIdDisplay.textContent = 'Error getting User ID (Auth failed)';
                         }
                     }
                 });
 
-                // Handle user leaving the page
+                // Add a global event listener for when the user closes/leaves the page
                 window.addEventListener('beforeunload', () => {
+                    // Best-effort attempt to clean up before closing.
+                    // This might not always complete reliably due to browser limitations.
                     updateUserOnlineStatus('offline');
                     if (chatUnsubscribe) chatUnsubscribe();
                     if (userStatusUnsubscribe) userStatusUnsubscribe();
+                    if (chatIncomingUnsubscribe) chatIncomingUnsubscribe();
                 });
 
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
-                userIdDisplay.textContent = 'Error initializing Firebase';
+                userIdDisplay.textContent = 'Error initializing Firebase. Check console.';
             }
         };
     </script>
