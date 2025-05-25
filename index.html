@@ -3,633 +3,558 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RandomChat365 - Talk to Strangers, Make Friends!</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <title>Random Chat - Instant Chat with Strangers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
+        /* General Body and Container Styling */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a1a2e; /* Dark background similar to the image */
-            color: #e0e0e0; /* Light text color */
-            overflow-x: hidden; /* Prevent horizontal scroll */
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-        }
-        .hero-section {
-            position: relative;
-            z-index: 1;
-        }
-        .wave-bg {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100px; /* Default height for small screens */
-            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%2316213e" fill-opacity="1" d="M0,192L48,181.3C96,171,192,149,288,149.3C384,149,480,171,576,176C672,181,768,171,864,160C960,149,1056,139,1152,144C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-            background-repeat: no-repeat;
-            background-size: cover;
-            background-position: bottom;
-            opacity: 0.3;
-            z-index: 0;
-        }
-        /* Custom styles for chat mockups */
-        .chat-bubble {
-            background-color: #333;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px; /* Fully rounded */
-            display: inline-block;
-            margin-bottom: 0.5rem;
-        }
-        .chat-bubble-user {
-            background-color: #6a0dad; /* Purple */
-            color: white;
-            margin-left: auto; /* Align to right */
-        }
-        .country-flag {
-            width: 24px;
-            height: 16px;
-            border-radius: 3px;
-            object-fit: cover;
-        }
-        /* Styles for the actual chat interface */
-        .actual-chat-container {
-            background-color: #1f2937; /* Darker gray for chat background */
-            border-radius: 0.75rem;
-            padding: 1rem;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f0f2f5; /* Light grey background */
             display: flex;
-            flex-direction: column;
-            min-height: 200px; /* Minimum height for chat area */
-            max-height: calc(100vh - 300px); /* Max height relative to viewport, considering input and buttons */
-            overflow-y: auto; /* Scrollable chat area */
-            border: 1px solid #374151;
-            flex-grow: 1; /* Allows it to grow within a flex parent */
+            justify-content: center;
+            align-items: flex-start; /* Align to the top */
+            min-height: 100vh;
+            padding: 0; /* Changed to 0 for full mobile screen usage */
+            overflow-x: hidden; /* Prevent horizontal scroll on small screens */
         }
-        .actual-chat-message {
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            margin-bottom: 0.5rem;
+
+        .container {
+            background-color: #fff;
+            width: 100%;
+            max-width: 400px; /* Max width for desktop, takes full width on mobile */
+            min-height: 100vh; /* Make container fill screen vertically on mobile */
+            border-radius: 0; /* Remove border-radius on mobile for full screen */
+            box-shadow: none; /* Remove box-shadow on mobile */
+            overflow: hidden; /* Ensures borders are respected */
+        }
+
+        /* Adjustments for smaller screens (Android phones) */
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%; /* Ensure it takes full width on very small screens */
+                border-radius: 0; /* No rounded corners on mobile */
+                box-shadow: none; /* No shadow on mobile */
+                margin: 0;
+            }
+
+            body {
+                padding: 0; /* Ensure no extra padding around the container */
+            }
+        }
+
+
+        /* Top Header */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #333; /* Dark header background */
+            color: #fff;
+            font-size: 0.9em;
+        }
+
+        .logo-img {
+            height: 24px; /* Adjust logo size */
+            width: auto;
+        }
+
+        .top-nav a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        .user-actions span {
+            margin-left: 10px;
+        }
+
+        /* Recommended Content Section */
+        .recommended-content {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background-color: #f7f7f7;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+            gap: 10px; /* Space between wrapped items */
+        }
+
+        .content-item img {
+            width: 60px; /* Size of the game/app icons */
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f7f7f7;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .visit-site-btn {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        /* Chat Section */
+        .chat-section {
+            padding: 15px;
+            padding-bottom: 70px; /* Add padding for fixed bottom buttons */
+        }
+
+        .chat-section h1 {
+            font-size: 1.2em;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .start-chat-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .start-chat-area label {
+            font-weight: 500;
+            color: #555;
+            white-space: nowrap; /* Prevent "Name:" from wrapping */
+        }
+
+        #name-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: #fff;
+            color: #333;
+        }
+
+        /* Style for disabled name input */
+        #name-input:disabled {
+            background-color: #e9e9e9;
+            cursor: not-allowed;
+        }
+
+        .action-button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap; /* Prevent button text from wrapping too much */
+        }
+
+        .primary-button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+        }
+
+        .primary-button:hover {
+            background-color: #45a049;
+        }
+
+        .chat-info {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .chat-info a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .chat-info a:hover {
+            text-decoration: underline;
+        }
+
+        .chat-messages-container {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px;
+            min-height: 200px; /* Increased min-height for better chat view */
+            max-height: calc(100vh - 400px); /* Adjust max height for mobile views */
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 8px;
+            padding: 7px 10px;
+            border-radius: 12px;
             max-width: 80%;
             word-wrap: break-word;
         }
-        .actual-chat-message.user {
-            background-color: #6a0dad; /* Purple for user messages */
+
+        .message p {
+            margin: 0;
+        }
+
+        .message.sent {
+            background-color: #DCF8C6; /* Light green for sent messages */
+            align-self: flex-end;
             margin-left: auto;
             text-align: right;
-            color: white;
         }
-        .actual-chat-message.stranger {
-            background-color: #4a5568; /* Gray for stranger messages */
+
+        .message.received {
+            background-color: #E6E6FA; /* Light purple for received messages */
+            align-self: flex-start;
             margin-right: auto;
             text-align: left;
-            color: #e0e0e0;
         }
-        .actual-chat-message.system {
-            background-color: #2d3748; /* Darker gray for system messages */
-            margin-left: auto;
-            margin-right: auto;
+
+        .message.system {
+            background-color: #e0e0e0; /* Grey for system messages */
+            color: #555;
             text-align: center;
-            font-style: italic;
-            font-size: 0.85rem;
-            color: #a0aec0;
+            font-size: 0.8em;
+            margin: 10px auto;
+            max-width: 90%;
+            border-radius: 5px;
         }
 
-        /* Media Queries for larger screens */
-        @media (min-width: 768px) { /* md breakpoint and up */
-            .wave-bg {
-                height: 200px; /* Increase wave height on larger screens */
-            }
-             .actual-chat-container {
-                max-height: calc(100vh - 350px);
-            }
+        .message-input-area {
+            display: flex;
+            gap: 10px;
+            position: fixed; /* Fixed position at bottom */
+            bottom: 55px; /* Adjust based on bottom buttons height */
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 10px 15px;
+            background-color: #fff;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box; /* Include padding in width calculation */
+            max-width: 400px; /* Match container max-width */
+            margin: 0 auto; /* Center the input area */
         }
 
-        @media (min-width: 1024px) { /* lg breakpoint and up */
-            .actual-chat-container {
-                height: 300px; /* Specific height for larger desktop screens */
-                max-height: 400px; /* Adjust if needed */
-            }
+        #messageInput {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px; /* Rounded input */
+            font-size: 1em;
         }
 
-        /* Adjust font sizes for very small screens if needed (example) */
-        @media (max-width: 400px) {
-            .hero-section h1 {
-                font-size: 2.5rem; /* Smaller heading on very small phones */
-            }
-            .hero-section p {
-                font-size: 1rem; /* Smaller paragraph text */
-            }
-            .chat-bubble, .actual-chat-message {
-                font-size: 0.85rem;
-            }
+        .send-button {
+            background-color: #007bff; /* Blue */
+            color: white;
+            border-radius: 20px; /* Rounded button */
+            padding: 10px 20px;
+        }
+
+        .send-button:hover {
+            background-color: #0056b3;
+        }
+
+        .bottom-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            padding: 10px 15px; /* Added horizontal padding */
+            border-top: 1px solid #eee;
+            background-color: #fff;
+            position: fixed; /* Fixed position at bottom */
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1); /* Shadow for lift effect */
+            box-sizing: border-box; /* Include padding in width calculation */
+            max-width: 400px; /* Match container max-width */
+            margin: 0 auto; /* Center the buttons */
+        }
+
+        .bottom-buttons .action-button {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .new-chat-button {
+            background-color: #3f51b5; /* Indigo */
+            color: white;
+        }
+        .new-chat-button:hover {
+            background-color: #303f9f;
+        }
+
+        .req-photo-button {
+            background-color: #ff9800; /* Orange */
+            color: white;
+        }
+        .req-photo-button:hover {
+            background-color: #fb8c00;
+        }
+
+        .report-button {
+            background-color: #f44336; /* Red */
+            color: white;
+        }
+        .report-button:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Modals (Pop-ups) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .confirm-button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+        }
+        .confirm-button:hover {
+            background-color: #45a049;
+        }
+
+        .cancel-button {
+            background-color: #ccc;
+            color: #333;
+        }
+        .cancel-button:hover {
+            background-color: #bbb;
+        }
+
+        /* Report Form Specifics */
+        #reportForm label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        #reportForm select,
+        #reportForm textarea {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the checkbox and label */
+            margin-bottom: 20px;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto; /* Override default input width */
+            margin: 0; /* Remove default margin */
+        }
+
+        /* Show modal class (controlled by JS) */
+        .modal.show {
+            display: flex;
         }
     </style>
-</head>
-<body class="gradient-bg min-h-screen flex flex-col">
+    </head>
+<body>
+    <div class="container">
+        <header class="top-header">
+            <div class="logo">
+                ChatBlink
+            </div>
+            <nav class="top-nav">
+                <a href="#">Games</a>
+                <a href="#">Rooms</a>
+                <a href="#">Settings</a>
+            </nav>
+            <div class="user-actions">
+                <span class="user-status">Online</span>
+                <span class="notifications">1</span>
+            </div>
+        </header>
 
-    <nav class="p-4 md:p-6 flex items-center justify-between flex-wrap">
-        <div class="flex items-center flex-shrink-0 text-white mr-6">
-            <svg class="h-8 w-8 mr-2 text-purple-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.336-3.111A8.85 8.85 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9H7v2h2V9z" clip-rule="evenodd"></path>
-            </svg>
-            <span class="font-semibold text-xl tracking-tight text-white">RandomChat365</span>
-        </div>
-        <div class="block lg:hidden">
-            <button id="nav-toggle" class="flex items-center px-3 py-2 border rounded text-purple-200 border-purple-400 hover:text-white hover:border-white">
-                <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
-            </button>
-        </div>
-        <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden" id="nav-content">
-            <div class="text-sm lg:flex-grow">
-                <a href="index.html" class="block mt-4 lg:inline-block lg:mt-0 text-white mr-4">
-                    Home
-                </a>
-                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
-                    Blog
-                </a>
-                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
-                    About
-                </a>
-                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white">
-                    Support
-                </a>
+        <section class="recommended-content">
+            <div class="content-item">
+                <img src="monopoly-logo.png" alt="Monopoly">
             </div>
-            <div>
-                <a href="#" class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white hover:border-transparent hover:text-purple-500 hover:bg-white mt-4 lg:mt-0">Login</a>
+            <div class="content-item">
+                <img src="roblox-logo.png" alt="Roblox">
             </div>
-        </div>
-    </nav>
-
-    <main class="flex-grow container mx-auto px-4 py-8 md:py-16 flex flex-col lg:flex-row items-center justify-center relative hero-section">
-        <div class="wave-bg"></div>
-        
-        <div class="lg:w-1/2 text-center lg:text-left mb-10 lg:mb-0 z-10">
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-white">
-                Talk to strangers, <br> Make friends!
-            </h1>
-            <p class="text-lg md:text-xl mb-8 max-w-md mx-auto lg:mx-0 text-gray-300">
-                Experience a random chat alternative to find friends, connect with people, and chat with strangers from all over the world!
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <button id="text-chat-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg flex items-center justify-center transition duration-300 ease-in-out transform hover:-translate-y-1">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.336-3.111A8.85 8.85 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9H7v2h2V9z" clip-rule="evenodd"></path></svg>
-                    Text Chat
-                </button>
-                <button id="video-chat-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg flex items-center justify-center transition duration-300 ease-in-out transform hover:-translate-y-1">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm4.553 1.355A1 1 0 017.182 7h5.636a1 1 0 01.63 1.645L12 11l-1.818 2.355a1 1 0 01-1.63-.001L8 11l-1.818 2.355a1 1 0 01-1.63-.001L4 11l-1.818 2.355A1 1 0 012 10.355V6z" clip-rule="evenodd"></path></svg>
-                    Video Chat
-                </button>
+            <div class="content-item">
+                <img src="season-2-logo.png" alt="Season 2">
             </div>
+            <div class="content-item">
+                <img src="shopping-logo.png" alt="Shopping">
+            </div>
+            </section>
+        <div class="content-footer">
+            <p>Popular Games Not To Be Missed</p>
+            <button class="visit-site-btn">Visit Site</button>
         </div>
 
-        <div class="lg:w-1/2 flex justify-center lg:justify-end relative z-10 mt-10 lg:mt-0">
-            <div id="initial-mockup" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
-                    <div class="flex -space-x-2 overflow-hidden">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="User 1">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="User 2">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/333333/ffffff?text=T" alt="User 3">
-                    </div>
+
+        <main class="chat-section">
+            <h1>Random Chat - Instant Chat with Strangers</h1>
+
+            <div class="start-chat-area">
+                <label for="name-input">Name:</label>
+                <input type="text" id="name-input" value="Your Name">
+                <button id="startChatBtn" class="action-button primary-button">START CHAT</button>
+            </div>
+
+            <div class="chat-info">
+                <p>This is one on one random chat room. You can safely start chat and share pics without registration! This is a great omegle random text chat alternative.</p>
+                <p>By starting random chat you agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy policy</a>.</p>
+                <p>You can also have a good time on <a href="#">chat rooms</a> and <a href="#">talk to strangers</a>.</p>
+                <p>We recommend you read our <a href="#">Safe Chatting Guide</a> to ensure a secure and enjoyable experience.</p>
+            </div>
+
+            <div class="chat-messages-container">
+                <div class="message received">
+                    <p>Stranger: Hello!</p>
                 </div>
-                <div class="flex flex-col space-y-3 mb-6">
-                    <div class="flex items-start">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 mr-2" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="Jon Snow">
-                        <div>
-                            <p class="text-sm font-semibold text-white">Jon Snow</p>
-                            <span class="chat-bubble text-sm text-gray-200">I don't know anything !</span>
-                        </div>
-                    </div>
-                    <div class="flex items-end justify-end">
-                        <div class="text-right">
-                            <p class="text-sm font-semibold text-white">TheLostWanderer</p>
-                            <span class="chat-bubble chat-bubble-user text-sm">Hello there!</span>
-                        </div>
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 ml-2" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="TheLostWanderer">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-4">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+1" alt="Video Feed 1">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+2" alt="Video Feed 2">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+3" alt="Video Feed 3">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+4" alt="Video Feed 4">
-                    </div>
-                </div>
-                <div class="mt-6 pt-4 border-t border-gray-700">
-                    <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
-                    <div class="grid grid-cols-2 gap-3 text-sm">
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag"><span>USA</span></div>
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag"><span>Germany</span></div>
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag"><span>India</span></div>
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag"><span>Italy</span></div>
-                    </div>
+                <div class="message sent">
+                    <p>You: Hi there!</p>
                 </div>
             </div>
 
-            <div id="actual-chat" class="bg-gray-800 bg-opacity-80 backdrop-blur-md p-4 sm:p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg hidden flex flex-col">
-                <h2 class="text-xl font-semibold text-white mb-4 text-center">Random Chat</h2>
-                <div id="actual-chat-messages" class="actual-chat-container mb-4">
-                    </div>
-                <div class="flex mb-3">
-                    <input type="text" id="actual-chat-input" placeholder="Type your message..." class="flex-grow bg-gray-700 text-white p-3 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-600">
-                    <button id="actual-send-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-5 rounded-r-lg transition duration-300 ease-in-out">
-                        Send
-                    </button>
-                </div>
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                     <button id="actual-skip-chat-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
-                        New Chat
-                    </button>
-                    <button id="actual-request-photo-btn" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
-                        Request Photo
-                    </button>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="actual-report-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
-                        Report User
-                    </button>
-                    <button id="actual-end-chat-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
-                        End Chat
-                    </button>
-                </div>
+            <div class="message-input-area">
+                <input type="text" id="messageInput" placeholder="Type Message Here">
+                <button id="sendButton" class="action-button send-button">SEND</button>
             </div>
-        </div>
-    </main>
 
-    <div id="nickname-prompt" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-gray-900 p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-2xl font-semibold text-white mb-6">Enter Your Nickname</h2>
-            <input type="text" id="nickname-input" placeholder="Your Nickname" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-600 mb-6">
-            <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
-                <button id="start-with-nickname-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full transition duration-300">
-                    Start Chatting
-                </button>
-                <button id="cancel-nickname-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-full transition duration-300">
-                    Cancel
-                </button>
+            <div class="bottom-buttons">
+                <button id="newChatBtn" class="action-button new-chat-button">New Chat</button>
+                <button id="reqPhotoBtn" class="action-button req-photo-button">Req Photo</button>
+                <button id="reportBtn" class="action-button report-button">Report</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="ageConfirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Age Verification</h2>
+            <p>By clicking 'Confirm', you acknowledge that you are 18 years of age or older and agree to our Terms of Service and Privacy Policy. This website may contain adult content.</p>
+            <div class="modal-buttons">
+                <button id="confirmAgeBtn" class="modal-button confirm-button">Confirm</button>
+                <button id="cancelAgeBtn" class="modal-button cancel-button">Cancel</button>
             </div>
         </div>
     </div>
 
-    <footer class="p-4 text-center text-gray-500 text-sm mt-auto"> &copy; 2025 RandomChat365. All rights reserved.
-    </footer>
+    <div id="reqPhotoConfirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Request Photo?</h2>
+            <p>This will send a request to your chat partner to share photos. They must accept before photos can be shared.</p>
+            <div class="modal-buttons">
+                <button id="sendReqPhotoBtn" class="modal-button confirm-button">Send Request</button>
+                <button id="cancelReqPhotoBtn" class="modal-button cancel-button">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // Toggle mobile navigation
-        document.getElementById('nav-toggle').addEventListener('click', function() {
-            let navContent = document.getElementById('nav-content');
-            navContent.classList.toggle('hidden');
-        });
+    <div id="reportUserModal" class="modal">
+        <div class="modal-content">
+            <h2>Report User</h2>
+            <form id="reportForm">
+                <label for="reportReason">Reason for Report:</label>
+                <select id="reportReason" required>
+                    <option value="">Select a reason</option>
+                    <option value="harassment">Harassment</option>
+                    <option value="inappropriate-content">Inappropriate Content</option>
+                    <option value="spam">Spam</option>
+                    <option value="underage">Underage User</option>
+                    <option value="threats">Threats/Hate Speech</option>
+                    <option value="other">Other (please specify)</option>
+                </select>
 
-        // Custom alert function
-        function customAlert(message, title = "Notification") {
-            const alertBox = document.createElement('div');
-            alertBox.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4'; // Increased z-index
-            alertBox.innerHTML = `
-                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white max-w-sm mx-auto w-full">
-                    <h3 class="text-xl font-semibold mb-3 text-purple-300">${title}</h3>
-                    <p class="text-md mb-5">${message}</p>
-                    <button class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full" onclick="this.closest('.fixed').remove()">
-                        OK
-                    </button>
+                <label for="reportDetails">Details (optional):</label>
+                <textarea id="reportDetails" rows="4" placeholder="Provide more details about the issue..."></textarea>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="blockUser">
+                    <label for="blockUser">Block this user</label>
                 </div>
-            `;
-            document.body.appendChild(alertBox);
-        }
-        
-        // Custom confirm function
-        function customConfirm(message, onOk, onCancel, title = "Confirm Action") {
-            const confirmBox = document.createElement('div');
-            confirmBox.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4'; // Increased z-index
-            confirmBox.innerHTML = `
-                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white max-w-sm mx-auto w-full">
-                    <h3 class="text-xl font-semibold mb-3 text-yellow-400">${title}</h3>
-                    <p class="text-md mb-6">${message}</p>
-                    <div class="flex justify-end space-x-3">
-                        <button class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-5 rounded-full" id="confirm-cancel-btn-custom">
-                            Cancel
-                        </button>
-                        <button class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-full" id="confirm-ok-btn-custom">
-                            OK
-                        </button>
-                    </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="modal-button report-button">Submit Report</button>
+                    <button type="button" id="cancelReportBtn" class="modal-button cancel-button">Cancel</button>
                 </div>
-            `;
-            document.body.appendChild(confirmBox);
+            </form>
+        </div>
+    </div>
 
-            document.getElementById('confirm-ok-btn-custom').addEventListener('click', () => {
-                confirmBox.remove();
-                if (onOk) onOk();
-            });
-
-            document.getElementById('confirm-cancel-btn-custom').addEventListener('click', () => {
-                confirmBox.remove();
-                if (onCancel) onCancel();
-            });
-        }
-
-
-        // --- Socket.IO Client-side Logic ---
-        const socket = io('http://localhost:3000'); // IMPORTANT: Replace with your deployed backend URL if necessary
-
-        const textChatBtn = document.getElementById('text-chat-btn');
-        const videoChatBtn = document.getElementById('video-chat-btn');
-        const initialMockup = document.getElementById('initial-mockup');
-        const actualChat = document.getElementById('actual-chat');
-        const actualChatMessages = document.getElementById('actual-chat-messages');
-        const actualChatInput = document.getElementById('actual-chat-input');
-        const actualSendBtn = document.getElementById('actual-send-btn');
-        
-        const actualEndChatBtn = document.getElementById('actual-end-chat-btn');
-        const actualSkipChatBtn = document.getElementById('actual-skip-chat-btn');
-        const actualRequestPhotoBtn = document.getElementById('actual-request-photo-btn');
-        const actualReportBtn = document.getElementById('actual-report-btn');
-
-        const nicknamePrompt = document.getElementById('nickname-prompt');
-        const nicknameInput = document.getElementById('nickname-input');
-        const startWithNicknameBtn = document.getElementById('start-with-nickname-btn');
-        const cancelNicknameBtn = document.getElementById('cancel-nickname-btn');
-
-        let userNickname = 'You'; 
-        let partnerNickname = 'Stranger';
-        let currentPartnerId = null;
-
-        // Event listener for "Text Chat" button
-        textChatBtn.addEventListener('click', () => {
-            nicknamePrompt.classList.remove('hidden');
-            nicknameInput.value = userNickname === 'You' ? '' : userNickname; // Pre-fill if nickname exists
-            nicknameInput.focus();
-            initialMockup.classList.add('hidden');
-            actualChat.classList.add('hidden');
-        });
-
-        cancelNicknameBtn.addEventListener('click', () => {
-            nicknamePrompt.classList.add('hidden');
-            if (!currentPartnerId) { // Only show main mockup if not in an active chat that was hidden
-                 resetChatInterface();
-            } else { // If a chat was active, re-show it or the connecting screen
-                actualChat.classList.remove('hidden'); // Or logic to show initialMockup if was connecting
-            }
-        });
-
-        startWithNicknameBtn.addEventListener('click', () => {
-            const nickname = nicknameInput.value.trim();
-            if (nickname) {
-                userNickname = nickname;
-            } else {
-                userNickname = 'User' + Math.floor(Math.random() * 10000);
-            }
-            nicknamePrompt.classList.add('hidden');
-
-            initialMockup.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full py-20">
-                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-                    <p class="text-xl font-semibold text-white">Connecting as ${userNickname}...</p>
-                </div>
-            `;
-            initialMockup.classList.remove('hidden');
-            actualChat.classList.add('hidden');
-            socket.emit('join_chat', { nickname: userNickname });
-        });
-        
-        videoChatBtn.addEventListener('click', function() {
-            customAlert('Video Chat functionality requires advanced WebRTC implementation and a robust backend. Coming soon!', 'Feature Update');
-        });
-
-        actualSendBtn.addEventListener('click', sendMessage);
-        actualChatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) { // Send on Enter, allow Shift+Enter for newline
-                e.preventDefault(); // Prevents adding a newline in the input
-                sendMessage();
-            }
-        });
-
-        actualEndChatBtn.addEventListener('click', endChat);
-        actualSkipChatBtn.addEventListener('click', skipChat);
-        actualRequestPhotoBtn.addEventListener('click', requestPhoto);
-        actualReportBtn.addEventListener('click', reportUser);
-
-        // --- Socket.IO Event Handlers ---
-        socket.on('connect', () => {
-            console.log('Connected to backend server:', socket.id);
-        });
-
-        socket.on('waiting_for_partner', () => {
-            nicknamePrompt.classList.add('hidden');
-            actualChat.classList.add('hidden');
-            initialMockup.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full py-20">
-                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-                    <p class="text-xl font-semibold text-white">Waiting for a partner as ${userNickname}...</p>
-                </div>
-            `;
-            initialMockup.classList.remove('hidden');
-            console.log('Waiting for a chat partner...');
-        });
-
-        socket.on('partner_found', (data) => {
-            console.log('Partner found! Room ID:', data.roomId, 'Partner ID:', data.partnerId, 'Partner Nickname:', data.partnerNickname);
-            currentPartnerId = data.partnerId;
-            partnerNickname = data.partnerNickname || 'Stranger';
-
-            initialMockup.classList.add('hidden');
-            actualChat.classList.remove('hidden');
-            
-            actualChatMessages.innerHTML = ''; // Clear previous messages
-            appendMessage(`You are now connected to ${partnerNickname}! Say hi!`, 'system');
-            actualChatInput.focus();
-        });
-
-        socket.on('chat_message', (data) => {
-            // Assumes backend sends: { message: 'text', sender: socket.id, nickname: 'senderNickname' }
-            const senderType = (data.sender === socket.id) ? 'user' : 'stranger';
-            // Use nickname from data if available, otherwise use stored nicknames
-            const displayName = data.nickname || (senderType === 'user' ? userNickname : partnerNickname);
-            appendMessage(data.message, senderType, displayName);
-        });
-
-        socket.on('partner_disconnected', (data) => {
-            if(actualChat.classList.contains('hidden')) return; // Don't show if already resetting/skipped
-            appendMessage(data.message || `${partnerNickname} has disconnected.`, 'system');
-            customAlert(data.message || `${partnerNickname} has disconnected. You can find a new partner.`, 'Chat Ended');
-            resetChatInterface();
-        });
-
-        socket.on('chat_ended', () => {
-            // This event is typically received after *you* initiated an end_chat
-            customAlert('Chat ended successfully.', 'Chat Ended');
-            resetChatInterface();
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Disconnected from backend server.');
-            customAlert('Disconnected from the chat server. Please check your connection and refresh the page.', 'Connection Lost');
-            resetChatInterface(); // Reset to main page, as connection is lost
-        });
-
-        // Demo photo request events
-        socket.on('photo_request_received', (data) => { // data: { from: partnerSocketId, fromNickname: 'PartnerNick' }
-            customConfirm(`${data.fromNickname || 'Your partner'} is requesting to see a photo. (Demo: No actual photo sharing will occur). Do you "accept" (mock)?`, 
-            () => {
-                customAlert(`You "accepted" the photo request from ${data.fromNickname || 'your partner'}.`, 'Photo Request');
-                socket.emit('photo_request_response', { to: data.from, fromNickname: userNickname, status: 'accepted_demo' });
-            }, 
-            () => {
-                customAlert(`You "declined" the photo request from ${data.fromNickname || 'your partner'}.`, 'Photo Request');
-                socket.emit('photo_request_response', { to: data.from, fromNickname: userNickname, status: 'declined_demo' });
-            }, 'Photo Request Received');
-        });
-
-        socket.on('photo_request_response_status', (data) => { // data: { partnerNickname: 'PartnerNick', status: 'accepted_demo' | 'declined_demo' }
-             customAlert(`${data.partnerNickname || 'Your partner'} responded to your photo request: ${data.status.replace('_demo', '')}. (This is a demo notification)`, 'Photo Request Update');
-        });
-
-
-        // Function to append messages
-        function appendMessage(text, type, senderNameForDisplay) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `actual-chat-message ${type}`;
-
-            // Create a text node for the message content to prevent XSS from user-supplied message text
-            const messageTextNode = document.createTextNode(text);
-
-            if (type === 'user' || type === 'stranger') {
-                const strong = document.createElement('strong');
-                strong.className = 'font-semibold block mb-0.5'; // Nickname on its own line for clarity
-                strong.textContent = (senderNameForDisplay || (type === 'user' ? userNickname : partnerNickname)) + ":";
-                messageDiv.appendChild(strong);
-                messageDiv.appendChild(messageTextNode);
-            } else { // System messages
-                messageDiv.textContent = text; 
-            }
-
-            actualChatMessages.appendChild(messageDiv);
-            actualChatMessages.scrollTop = actualChatMessages.scrollHeight;
-        }
-
-        function sendMessage() {
-            const messageText = actualChatInput.value.trim();
-            if (messageText && currentPartnerId) {
-                socket.emit('chat_message', { message: messageText /*, recipientId: currentPartnerId */ }); 
-                // My own message will be echoed back via 'chat_message' from server with my ID and nickname.
-                // Or, append directly: appendMessage(messageText, 'user', userNickname); 
-                // Current setup relies on server echo for consistency.
-                actualChatInput.value = '';
-            } else if (!currentPartnerId) {
-                customAlert("You are not connected to anyone to send a message.", "Error");
-            }
-        }
-
-        function endChat() {
-            if (!currentPartnerId && actualChat.classList.contains('hidden')) {
-                // If not in a chat and chat window is hidden, do nothing or go to main screen
-                resetChatInterface();
-                return;
-            }
-            customConfirm('Are you sure you want to end this chat session and return to the main screen?', () => {
-                socket.emit('end_chat'); 
-                // Server should handle cleanup and may send 'chat_ended' or 'partner_disconnected' to the other user.
-                // The client that clicked 'end' will get 'chat_ended' and then resetChatInterface.
-            }, null, 'End Chat');
-        }
-
-        function skipChat() {
-             if (!currentPartnerId) {
-                customAlert("You are not in a chat to skip. Click 'Text Chat' to start.", "Not in Chat");
-                return;
-            }
-            customConfirm('Find a new chat partner? Your current chat will end.', () => {
-                appendMessage('Looking for a new partner...', 'system'); // Optional: message in current chat before it switches
-                socket.emit('leave_current_chat'); // Inform server to disconnect this user from current partner
-
-                actualChat.classList.add('hidden');
-                initialMockup.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full py-20">
-                        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-                        <p class="text-xl font-semibold text-white">Searching for new partner as ${userNickname}...</p>
-                    </div>
-                `;
-                initialMockup.classList.remove('hidden');
-                
-                actualChatMessages.innerHTML = ''; // Clear messages from the old chat
-                currentPartnerId = null;
-                partnerNickname = 'Stranger';
-
-                socket.emit('join_chat', { nickname: userNickname }); // Request a new chat
-            }, null, 'New Chat');
-        }
-
-        function requestPhoto() {
-            if (currentPartnerId) {
-                customConfirm(`Send a (demo) photo request to ${partnerNickname}?`, () => {
-                    socket.emit('request_photo', { to: currentPartnerId, fromNickname: userNickname });
-                    appendMessage(`You sent a photo request to ${partnerNickname}. (Demo)`, 'system');
-                    customAlert('Photo request sent. This is a demo; no actual photos are transferred.', 'Photo Request Sent');
-                });
-            } else {
-                customAlert('You are not connected to anyone to request a photo.', "Error");
-            }
-        }
-
-        function reportUser() {
-            if (currentPartnerId) {
-                customConfirm(`Are you sure you want to report ${partnerNickname}? This helps us keep the community safe.`, () => {
-                    socket.emit('report_user', { reportedUserId: currentPartnerId, reportedUserNickname: partnerNickname });
-                    customAlert(`${partnerNickname} has been reported. Our moderation team will review this. Thank you.`, 'User Reported');
-                    // Optionally, you might want to automatically skip the user after reporting.
-                    // skipChat(); // Uncomment to auto-skip after reporting
-                }, null, 'Report User');
-            } else {
-                customAlert('You are not connected to anyone to report.', "Error");
-            }
-        }
-
-        function resetChatInterface() {
-            actualChat.classList.add('hidden');
-            nicknamePrompt.classList.add('hidden');
-            initialMockup.classList.remove('hidden'); 
-            
-            // Restore original mockup content
-            initialMockup.innerHTML = `
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
-                    <div class="flex -space-x-2 overflow-hidden">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="User 1">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="User 2">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/333333/ffffff?text=T" alt="User 3">
-                    </div>
-                </div>
-                <div class="flex flex-col space-y-3 mb-6">
-                    <div class="flex items-start">
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 mr-2" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="Jon Snow">
-                        <div><p class="text-sm font-semibold text-white">Jon Snow</p><span class="chat-bubble text-sm text-gray-200">I don't know anything !</span></div>
-                    </div>
-                    <div class="flex items-end justify-end">
-                        <div class="text-right"><p class="text-sm font-semibold text-white">TheLostWanderer</p><span class="chat-bubble chat-bubble-user text-sm">Hello there!</span></div>
-                        <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 ml-2" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="TheLostWanderer">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-4">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+1" alt="Video Feed 1">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+2" alt="Video Feed 2">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+3" alt="Video Feed 3">
-                        <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+4" alt="Video Feed 4">
-                    </div>
-                </div>
-                <div class="mt-6 pt-4 border-t border-gray-700">
-                    <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
-                    <div class="grid grid-cols-2 gap-3 text-sm">
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag"><span>USA</span></div>
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag"><span>Germany</span></div>
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag"><span>India</span></div>
-                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag"><span>Italy</span></div>
-                    </div>
-                </div>
-            `;
-            currentPartnerId = null;
-            partnerNickname = 'Stranger'; 
-            // userNickname is intentionally persisted for the session unless changed by user
-            actualChatMessages.innerHTML = ''; // Clear chat messages
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
