@@ -3,557 +3,561 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Chat - Instant Chat with Strangers</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    
+    <title>Live Random Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* General Body and Container Styling */
         body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            background-color: #f0f2f5; /* Light grey background */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Align to the top */
-            min-height: 100vh;
-            padding: 0; /* Changed to 0 for full mobile screen usage */
-            overflow-x: hidden; /* Prevent horizontal scroll on small screens */
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom Scrollbar Style */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .container {
-            background-color: #fff;
-            width: 100%;
-            max-width: 400px; /* Max width for desktop, takes full width on mobile */
-            min-height: 100vh; /* Make container fill screen vertically on mobile */
-            border-radius: 0; /* Remove border-radius on mobile for full screen */
-            box-shadow: none; /* Remove box-shadow on mobile */
-            overflow: hidden; /* Ensures borders are respected */
-        }
-
-        /* Adjustments for smaller screens (Android phones) */
-        @media (max-width: 480px) {
-            .container {
-                max-width: 100%; /* Ensure it takes full width on very small screens */
-                border-radius: 0; /* No rounded corners on mobile */
-                box-shadow: none; /* No shadow on mobile */
-                margin: 0;
-            }
-
-            body {
-                padding: 0; /* Ensure no extra padding around the container */
-            }
-        }
-
-
-        /* Top Header */
-        .top-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #333; /* Dark header background */
-            color: #fff;
-            font-size: 0.9em;
-        }
-
-        .logo-img {
-            height: 24px; /* Adjust logo size */
-            width: auto;
-        }
-
-        .top-nav a {
-            color: #fff;
-            text-decoration: none;
-            margin-left: 15px;
-        }
-
-        .user-actions span {
-            margin-left: 10px;
-        }
-
-        /* Recommended Content Section */
-        .recommended-content {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background-color: #f7f7f7;
-            border-bottom: 1px solid #eee;
-            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
-            gap: 10px; /* Space between wrapped items */
-        }
-
-        .content-item img {
-            width: 60px; /* Size of the game/app icons */
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .content-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #f7f7f7;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9em;
-            color: #555;
-        }
-
-        .visit-site-btn {
-            background-color: #4CAF50; /* Green */
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        /* Chat Section */
-        .chat-section {
-            padding: 15px;
-            padding-bottom: 70px; /* Add padding for fixed bottom buttons */
-        }
-
-        .chat-section h1 {
-            font-size: 1.2em;
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .start-chat-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .start-chat-area label {
-            font-weight: 500;
-            color: #555;
-            white-space: nowrap; /* Prevent "Name:" from wrapping */
-        }
-
-        #name-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-            background-color: #fff;
-            color: #333;
-        }
-
-        /* Style for disabled name input */
-        #name-input:disabled {
-            background-color: #e9e9e9;
-            cursor: not-allowed;
-        }
-
-        .action-button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            white-space: nowrap; /* Prevent button text from wrapping too much */
-        }
-
-        .primary-button {
-            background-color: #4CAF50; /* Green */
-            color: white;
-        }
-
-        .primary-button:hover {
-            background-color: #45a049;
-        }
-
-        .chat-info {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 20px;
-            line-height: 1.4;
-        }
-
-        .chat-info a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .chat-info a:hover {
-            text-decoration: underline;
-        }
-
-        .chat-messages-container {
-            background-color: #f9f9f9;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            padding: 10px;
-            min-height: 200px; /* Increased min-height for better chat view */
-            max-height: calc(100vh - 400px); /* Adjust max height for mobile views */
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-
-        .message {
-            margin-bottom: 8px;
-            padding: 7px 10px;
-            border-radius: 12px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .message p {
-            margin: 0;
-        }
-
-        .message.sent {
-            background-color: #DCF8C6; /* Light green for sent messages */
-            align-self: flex-end;
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .message.received {
-            background-color: #E6E6FA; /* Light purple for received messages */
-            align-self: flex-start;
-            margin-right: auto;
-            text-align: left;
-        }
-
-        .message.system {
-            background-color: #e0e0e0; /* Grey for system messages */
-            color: #555;
-            text-align: center;
-            font-size: 0.8em;
-            margin: 10px auto;
-            max-width: 90%;
-            border-radius: 5px;
-        }
-
-        .message-input-area {
-            display: flex;
-            gap: 10px;
-            position: fixed; /* Fixed position at bottom */
-            bottom: 55px; /* Adjust based on bottom buttons height */
-            left: 0;
-            right: 0;
-            width: 100%;
-            padding: 10px 15px;
-            background-color: #fff;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            box-sizing: border-box; /* Include padding in width calculation */
-            max-width: 400px; /* Match container max-width */
-            margin: 0 auto; /* Center the input area */
-        }
-
-        #messageInput {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 20px; /* Rounded input */
-            font-size: 1em;
-        }
-
-        .send-button {
-            background-color: #007bff; /* Blue */
-            color: white;
-            border-radius: 20px; /* Rounded button */
-            padding: 10px 20px;
-        }
-
-        .send-button:hover {
-            background-color: #0056b3;
-        }
-
-        .bottom-buttons {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-            padding: 10px 15px; /* Added horizontal padding */
-            border-top: 1px solid #eee;
-            background-color: #fff;
-            position: fixed; /* Fixed position at bottom */
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1); /* Shadow for lift effect */
-            box-sizing: border-box; /* Include padding in width calculation */
-            max-width: 400px; /* Match container max-width */
-            margin: 0 auto; /* Center the buttons */
-        }
-
-        .bottom-buttons .action-button {
-            flex: 1;
-            font-weight: 500;
-        }
-
-        .new-chat-button {
-            background-color: #3f51b5; /* Indigo */
-            color: white;
-        }
-        .new-chat-button:hover {
-            background-color: #303f9f;
-        }
-
-        .req-photo-button {
-            background-color: #ff9800; /* Orange */
-            color: white;
-        }
-        .req-photo-button:hover {
-            background-color: #fb8c00;
-        }
-
-        .report-button {
-            background-color: #f44336; /* Red */
-            color: white;
-        }
-        .report-button:hover {
-            background-color: #d32f2f;
-        }
-
-        /* Modals (Pop-ups) */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0, 0, 0, 0.6); /* Black w/ opacity */
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: #fff;
-            margin: auto;
-            padding: 25px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151; /* gray-700 */
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            width: 90%;
-            max-width: 350px;
-            text-align: center;
         }
 
-        .modal-content h2 {
-            margin-top: 0;
-            color: #333;
-            font-size: 1.3em;
-            margin-bottom: 15px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4f46e5; /* indigo-600 */
+            border-radius: 10px;
         }
 
-        .modal-content p {
-            color: #666;
-            margin-bottom: 25px;
-            font-size: 0.95em;
-            line-height: 1.5;
-        }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .modal-button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.2s ease;
-        }
-
-        .confirm-button {
-            background-color: #4CAF50; /* Green */
-            color: white;
-        }
-        .confirm-button:hover {
-            background-color: #45a049;
-        }
-
-        .cancel-button {
-            background-color: #ccc;
-            color: #333;
-        }
-        .cancel-button:hover {
-            background-color: #bbb;
-        }
-
-        /* Report Form Specifics */
-        #reportForm label {
-            display: block;
-            text-align: left;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-            font-size: 0.9em;
-        }
-
-        #reportForm select,
-        #reportForm textarea {
-            width: calc(100% - 20px); /* Adjust for padding */
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            justify-content: center; /* Center the checkbox and label */
-            margin-bottom: 20px;
-            gap: 8px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto; /* Override default input width */
-            margin: 0; /* Remove default margin */
-        }
-
-        /* Show modal class (controlled by JS) */
-        .modal.show {
-            display: flex;
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4338ca; /* indigo-700 */
         }
     </style>
-    </head>
-<body>
-    <div class="container">
-        <header class="top-header">
-            <div class="logo">
-                ChatBlink
-            </div>
-            <nav class="top-nav">
-                <a href="#">Games</a>
-                <a href="#">Rooms</a>
-                <a href="#">Settings</a>
-            </nav>
-            <div class="user-actions">
-                <span class="user-status">Online</span>
-                <span class="notifications">1</span>
-            </div>
-        </header>
+</head>
+<body class="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
 
-        <section class="recommended-content">
-            <div class="content-item">
-                <img src="monopoly-logo.png" alt="Monopoly">
-            </div>
-            <div class="content-item">
-                <img src="roblox-logo.png" alt="Roblox">
-            </div>
-            <div class="content-item">
-                <img src="season-2-logo.png" alt="Season 2">
-            </div>
-            <div class="content-item">
-                <img src="shopping-logo.png" alt="Shopping">
-            </div>
-            </section>
-        <div class="content-footer">
-            <p>Popular Games Not To Be Missed</p>
-            <button class="visit-site-btn">Visit Site</button>
+    <div id="app-container" class="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col h-[80vh] sm:h-[70vh]">
+        <h1 class="text-3xl font-bold text-center mb-6 text-indigo-400">Live Random Chat</h1>
+
+        <div class="text-sm text-gray-400 text-center mb-4">
+            Your User ID: <span id="userIdDisplay" class="font-mono text-indigo-300 break-all">Loading...</span>
         </div>
 
-
-        <main class="chat-section">
-            <h1>Random Chat - Instant Chat with Strangers</h1>
-
-            <div class="start-chat-area">
-                <label for="name-input">Name:</label>
-                <input type="text" id="name-input" value="Stranger"> <button id="startChatBtn" class="action-button primary-button">START CHAT</button>
-            </div>
-
-            <div class="chat-info">
-                <p>This is one on one random chat room. You can safely start chat and share pics without registration! This is a great omegle random text chat alternative.</p>
-                <p>By starting random chat you agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy policy</a>.</p>
-                <p>You can also have a good time on <a href="#">chat rooms</a> and <a href="#">talk to strangers</a>.</p>
-                <p>We recommend you read our <a href="#">Safe Chatting Guide</a> to ensure a secure and enjoyable experience.</p>
-            </div>
-
-            <div class="chat-messages-container">
-                <div class="message received">
-                    <p>Stranger: Hello!</p>
-                </div>
-                <div class="message sent">
-                    <p>You: Hi there!</p>
-                </div>
-            </div>
-
-            <div class="message-input-area">
-                <input type="text" id="messageInput" placeholder="Type Message Here">
-                <button id="sendButton" class="action-button send-button">SEND</button>
-            </div>
-
-            <div class="bottom-buttons">
-                <button id="newChatBtn" class="action-button new-chat-button">New Chat</button>
-                <button id="reqPhotoBtn" class="action-button req-photo-button">Req Photo</button>
-                <button id="reportBtn" class="action-button report-button">Report</button>
-            </div>
-        </main>
-    </div>
-
-    <div id="ageConfirmModal" class="modal">
-        <div class="modal-content">
-            <h2>Age Verification</h2>
-            <p>By clicking 'Confirm', you acknowledge that you are 18 years of age or older and agree to our Terms of Service and Privacy Policy. This website may contain adult content.</p>
-            <div class="modal-buttons">
-                <button id="confirmAgeBtn" class="modal-button confirm-button">Confirm</button>
-                <button id="cancelAgeBtn" class="modal-button cancel-button">Cancel</button>
-            </div>
+        <div id="initialSection" class="flex-grow flex items-center justify-center flex-col">
+            <button id="startChatButton"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Start Chat
+            </button>
+            <p id="waitingMessage" class="text-gray-400 mt-4 hidden">Waiting for a chat partner...</p>
         </div>
-    </div>
 
-    <div id="reqPhotoConfirmModal" class="modal">
-        <div class="modal-content">
-            <h2>Request Photo?</h2>
-            <p>This will send a request to your chat partner to share photos. They must accept before photos can be shared.</p>
-            <div class="modal-buttons">
-                <button id="sendReqPhotoBtn" class="modal-button confirm-button">Send Request</button>
-                <button id="cancelReqPhotoBtn" class="modal-button cancel-button">Cancel</button>
+        <div id="chatSection" class="hidden flex-grow flex flex-col">
+            <div id="messagesContainer" class="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-700 rounded-lg mb-4 custom-scrollbar">
+                </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                <button id="suggestIcebreakerButton"
+                    class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 text-sm">
+                    ✨ Suggest Icebreaker
+                </button>
+                <button id="suggestTopicButton"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 text-sm">
+                    ✨ Suggest Topic
+                </button>
             </div>
-        </div>
-    </div>
 
-    <div id="reportUserModal" class="modal">
-        <div class="modal-content">
-            <h2>Report User</h2>
-            <form id="reportForm">
-                <label for="reportReason">Reason for Report:</label>
-                <select id="reportReason" required>
-                    <option value="">Select a reason</option>
-                    <option value="harassment">Harassment</option>
-                    <option value="inappropriate-content">Inappropriate Content</option>
-                    <option value="spam">Spam</option>
-                    <option value="underage">Underage User</option>
-                    <option value="threats">Threats/Hate Speech</option>
-                    <option value="other">Other (please specify)</option>
-                </select>
-
-                <label for="reportDetails">Details (optional):</label>
-                <textarea id="reportDetails" rows="4" placeholder="Provide more details about the issue..."></textarea>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="blockUser">
-                    <label for="blockUser">Block this user</label>
-                </div>
-
-                <div class="modal-buttons">
-                    <button type="submit" class="modal-button report-button">Submit Report</button>
-                    <button type="button" id="cancelReportBtn" class="modal-button cancel-button">Cancel</button>
-                </div>
+            <form id="messageForm" class="flex gap-2 mb-4">
+                <input type="text" id="messageInput" placeholder="Type your message..."
+                    class="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400" />
+                <button type="submit" id="sendMessageButton"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-5 rounded-lg shadow-md transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                    Send
+                </button>
             </form>
+
+            <button id="nextChatButton"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Next Chat
+            </button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase instances and user state
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let currentChatId = null; // ID of the current chat document
+        let chatUnsubscribe = null; // To unsubscribe from chat messages listener
+        let userStatusUnsubscribe = null; // To unsubscribe from user status listener
+        let appId; // Global variable for the application ID
+        let messages = []; // Correctly defined globally here
+
+        // DOM Elements
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const initialSection = document.getElementById('initialSection');
+        const startChatButton = document.getElementById('startChatButton');
+        const waitingMessage = document.getElementById('waitingMessage');
+        const chatSection = document.getElementById('chatSection');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+        const nextChatButton = document.getElementById('nextChatButton');
+        const suggestIcebreakerButton = document.getElementById('suggestIcebreakerButton');
+        const suggestTopicButton = document.getElementById('suggestTopicButton');
+
+        // Firestore collection paths (public data as per instructions)
+        let CHATS_COLLECTION_PATH;
+        let USERS_ONLINE_COLLECTION_PATH;
+
+        // Function to scroll to the bottom of the chat window
+        const scrollToBottom = () => {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        // Function to render messages in the UI
+        const renderMessages = () => {
+            messagesContainer.innerHTML = ''; // Clear existing messages
+            if (messages.length === 0 && currentChatId) {
+                const initialMessage = document.createElement('p');
+                initialMessage.className = 'text-center text-gray-400 italic';
+                initialMessage.innerHTML = `You've connected with a chat partner. Say hello!`;
+                messagesContainer.appendChild(initialMessage);
+            }
+
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                // Determine alignment based on sender type (user, partner, or AI)
+                let alignmentClass = '';
+                let bubbleClass = '';
+
+                if (msg.senderId === userId) {
+                    alignmentClass = 'justify-end';
+                    bubbleClass = 'bg-indigo-500 text-white rounded-br-none';
+                } else if (msg.senderId === 'AI') {
+                    alignmentClass = 'justify-center'; // Center AI messages
+                    bubbleClass = 'bg-purple-800 text-purple-200 text-center rounded-lg'; // Distinct AI styling
+                } else {
+                    alignmentClass = 'justify-start';
+                    bubbleClass = 'bg-gray-600 text-gray-100 rounded-bl-none';
+                }
+
+
+                messageDiv.className = `flex ${alignmentClass}`;
+
+                const messageBubble = document.createElement('div');
+                messageBubble.className = `max-w-[70%] p-3 rounded-lg shadow-md ${bubbleClass}`;
+
+                const messageText = document.createElement('p');
+                messageText.className = 'text-sm';
+                messageText.textContent = msg.text;
+
+                const messageTimestamp = document.createElement('span');
+                messageTimestamp.className = 'block text-xs text-right mt-1 opacity-75';
+                if (msg.senderId !== 'AI') { // AI messages don't need a timestamp
+                    messageTimestamp.textContent = new Date(msg.timestamp).toLocaleTimeString();
+                } else {
+                    messageTimestamp.textContent = 'AI Generated'; // Label for AI messages
+                }
+
+
+                messageBubble.appendChild(messageText);
+                messageBubble.appendChild(messageTimestamp);
+                messageDiv.appendChild(messageBubble);
+                messagesContainer.appendChild(messageDiv);
+            });
+            scrollToBottom();
+        };
+
+        // Function to update user's online status in Firestore
+        const updateUserOnlineStatus = async (status) => {
+            if (!userId || !db || !USERS_ONLINE_COLLECTION_PATH) return;
+            const userDocRef = doc(db, USERS_ONLINE_COLLECTION_PATH, userId);
+            try {
+                if (status === 'online') {
+                    await setDoc(userDocRef, { timestamp: Date.now() });
+                } else if (status === 'offline') {
+                    await deleteDoc(userDocRef);
+                }
+            } catch (error) {
+                console.error("Error updating user online status:", error);
+            }
+        };
+
+        // Function to end the current chat
+        const endCurrentChat = async () => {
+            if (chatUnsubscribe) {
+                chatUnsubscribe();
+                chatUnsubscribe = null;
+            }
+            if (userStatusUnsubscribe) {
+                userStatusUnsubscribe();
+                userStatusUnsubscribe = null;
+            }
+            if (currentChatId) {
+                try {
+                    // Mark the chat as ended or delete it
+                    const chatDocRef = doc(db, CHATS_COLLECTION_PATH, currentChatId);
+                    await updateDoc(chatDocRef, { status: 'ended' });
+                    // Optionally, delete the chat document and its messages after a delay or based on policy
+                    // For now, just mark as ended.
+                } catch (error) {
+                    console.error("Error ending chat:", error);
+                }
+            }
+            currentChatId = null;
+            messages = []; // Clear messages array
+            renderMessages(); // Clear messages from UI
+            initialSection.classList.remove('hidden');
+            startChatButton.classList.remove('hidden');
+            waitingMessage.classList.add('hidden');
+            chatSection.classList.add('hidden');
+            updateUserOnlineStatus('offline'); // Ensure user is removed from online list
+        };
+
+
+        // Function to find or create a chat
+        const findOrCreateChat = async () => {
+            if (!userId || !db || !CHATS_COLLECTION_PATH || !USERS_ONLINE_COLLECTION_PATH) {
+                console.error("Firebase not initialized or userId not set.");
+                return;
+            }
+
+            // Clear previous chat state and reset UI
+            endCurrentChat(); // This will clear 'messages' and reset UI elements
+
+            initialSection.classList.remove('hidden');
+            startChatButton.classList.add('hidden');
+            waitingMessage.classList.remove('hidden');
+            chatSection.classList.add('hidden');
+
+
+            try {
+                // Look for an available partner
+                const usersOnlineRef = collection(db, USERS_ONLINE_COLLECTION_PATH);
+                const q = query(usersOnlineRef);
+                const onlineUsersSnapshot = await getDocs(q);
+
+                let foundPartnerId = null;
+                onlineUsersSnapshot.forEach(doc => {
+                    if (doc.id !== userId) { // Don't match with self
+                        foundPartnerId = doc.id;
+                        return; // Exit forEach early
+                    }
+                });
+
+                if (foundPartnerId) {
+                    // Found a partner, create a new chat
+                    const newChatRef = await addDoc(collection(db, CHATS_COLLECTION_PATH), {
+                        users: [userId, foundPartnerId],
+                        createdAt: Date.now(),
+                        status: 'active'
+                    });
+                    currentChatId = newChatRef.id;
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, foundPartnerId)); // Remove partner from waiting list
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId)); // Remove self from waiting list if was there
+                    startListeningToChat();
+                } else {
+                    // No partner found, add self to waiting list
+                    await updateUserOnlineStatus('online');
+                    // Listen for changes in online users to detect a new partner
+                    userStatusUnsubscribe = onSnapshot(usersOnlineRef, async (snapshot) => {
+                        let newPartnerFound = false;
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added' && change.doc.id !== userId) {
+                                newPartnerFound = change.doc.id;
+                            }
+                        });
+                        // Instead of re-running findOrCreateChat, we'll set up a listener
+                        // for chats that include us.
+                    });
+
+                    // Also, listen for any chat documents that include the current user
+                    const chatsRef = collection(db, CHATS_COLLECTION_PATH);
+                    const qUserChats = query(chatsRef, where("users", "array-contains", userId), where("status", "==", "active"));
+                    chatUnsubscribe = onSnapshot(qUserChats, (snapshot) => {
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added' || (change.type === 'modified' && change.doc.data().status === 'active')) {
+                                const chatData = change.doc.data();
+                                if (chatData.users.includes(userId)) {
+                                    currentChatId = change.doc.id;
+                                    startListeningToChat();
+                                    // Ensure we remove ourselves from the online list once a chat is established
+                                    updateUserOnlineStatus('offline');
+                                    if (userStatusUnsubscribe) {
+                                        userStatusUnsubscribe();
+                                        userStatusUnsubscribe = null;
+                                    }
+                                }
+                            } else if (change.type === 'modified' && change.doc.data().status === 'ended' && change.doc.id === currentChatId) {
+                                // If current chat is marked as ended by partner
+                                endCurrentChat();
+                            }
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error("Error finding or creating chat:", error);
+                waitingMessage.textContent = "Error finding partner. Please try again.";
+                startChatButton.classList.remove('hidden');
+            }
+        };
+
+        // Function to start listening to chat messages
+        const startListeningToChat = () => {
+            if (!currentChatId || !db || !CHATS_COLLECTION_PATH) return;
+
+            // Unsubscribe from any previous chat listener
+            if (chatUnsubscribe) {
+                chatUnsubscribe();
+            }
+            // Unsubscribe from user status listener if active
+            if (userStatusUnsubscribe) {
+                userStatusUnsubscribe();
+                userStatusUnsubscribe = null;
+            }
+
+            // Hide initial section, show chat section
+            initialSection.classList.add('hidden');
+            chatSection.classList.remove('hidden');
+
+            // Listen for messages in the current chat
+            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+            chatUnsubscribe = onSnapshot(query(messagesRef), (snapshot) => { // Query for potential sorting
+                const newMessages = [];
+                snapshot.forEach(doc => {
+                    newMessages.push({ id: doc.id, ...doc.data() });
+                });
+                // Sort messages by timestamp to ensure correct order
+                messages = newMessages.sort((a, b) => a.timestamp - b.timestamp);
+                renderMessages();
+            }, (error) => {
+                console.error("Error listening to messages:", error);
+                // Handle chat ending due to error, maybe go back to start screen
+                endCurrentChat();
+            });
+        };
+
+        // Function to send a message
+        const sendMessage = async (e) => {
+            e.preventDefault();
+            const inputVal = messageInput.value.trim();
+            if (inputVal && currentChatId && userId) {
+                try {
+                    const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+                    await addDoc(messagesRef, {
+                        text: inputVal,
+                        senderId: userId,
+                        timestamp: Date.now()
+                    });
+                    messageInput.value = ''; // Clear input field
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                }
+            }
+        };
+
+        // Function to call Gemini API for text generation
+        const callGeminiApi = async (prompt) => {
+            const apiKey = ""; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Gemini API returned unexpected structure:", result);
+                    return "Could not generate a response. Please try again.";
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return "Failed to connect to AI. Please check your network or try again later.";
+            }
+        };
+
+        // Function to suggest an icebreaker
+        const suggestIcebreaker = async () => {
+            if (!currentChatId || !userId) {
+                // Show a message if not in a chat
+                const infoMessage = {
+                    id: Date.now(),
+                    text: "Please start a chat first to get an icebreaker!",
+                    senderId: 'AI',
+                    timestamp: Date.now()
+                };
+                messages.push(infoMessage);
+                renderMessages();
+                return;
+            }
+
+            // Add a loading message
+            const loadingMessage = {
+                id: 'loading-icebreaker',
+                text: "AI is thinking of an icebreaker...",
+                senderId: 'AI',
+                timestamp: Date.now()
+            };
+            messages.push(loadingMessage);
+            renderMessages();
+
+            const prompt = "Generate a single, interesting icebreaker question for two strangers who just met in a random chat. Make it open-ended and easy to answer. Do not include any introductory phrases like 'Here's an icebreaker:'";
+            const aiResponse = await callGeminiApi(prompt);
+
+            // Remove loading message
+            messages = messages.filter(msg => msg.id !== 'loading-icebreaker');
+
+            const icebreakerMessage = {
+                id: Date.now() + 1,
+                text: `✨ Icebreaker: ${aiResponse}`,
+                senderId: 'AI',
+                timestamp: Date.now()
+            };
+            // Add to Firestore so both users see it
+            try {
+                const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+                await addDoc(messagesRef, icebreakerMessage);
+            } catch (error) {
+                console.error("Error adding AI message to Firestore:", error);
+                // Fallback: just add to local messages if Firestore fails
+                messages.push(icebreakerMessage);
+                renderMessages();
+            }
+        };
+
+        // Function to suggest a topic
+        const suggestTopic = async () => {
+            if (!currentChatId || !userId) {
+                const infoMessage = {
+                    id: Date.now(),
+                    text: "Please start a chat first to get a topic suggestion!",
+                    senderId: 'AI',
+                    timestamp: Date.now()
+                };
+                messages.push(infoMessage);
+                renderMessages();
+                return;
+            }
+
+            // Add a loading message
+            const loadingMessage = {
+                id: 'loading-topic',
+                text: "AI is thinking of a topic...",
+                senderId: 'AI',
+                timestamp: Date.now()
+            };
+            messages.push(loadingMessage);
+            renderMessages();
+
+            // Get last few messages for context
+            const chatHistoryText = messages
+                .filter(msg => msg.senderId !== 'AI') // Exclude AI messages from history context
+                .slice(-5) // Get last 5 messages
+                .map(msg => `${msg.senderId === userId ? 'You' : 'Partner'}: ${msg.text}`)
+                .join('\n');
+
+            const prompt = `Given the following chat history (if any), suggest one new, engaging topic for discussion. If there's no history, suggest a general, lighthearted topic. Keep it concise. Chat history:\n${chatHistoryText || 'No chat history yet.'}`;
+            const aiResponse = await callGeminiApi(prompt);
+
+            // Remove loading message
+            messages = messages.filter(msg => msg.id !== 'loading-topic');
+
+            const topicMessage = {
+                id: Date.now() + 1,
+                text: `✨ Topic: ${aiResponse}`,
+                senderId: 'AI',
+                timestamp: Date.now()
+            };
+            // Add to Firestore so both users see it
+            try {
+                const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+                await addDoc(messagesRef, topicMessage);
+            } catch (error) {
+                console.error("Error adding AI message to Firestore:", error);
+                // Fallback: just add to local messages if Firestore fails
+                messages.push(topicMessage);
+                renderMessages();
+            }
+        };
+
+
+        // Event Listeners
+        startChatButton.addEventListener('click', findOrCreateChat);
+        messageForm.addEventListener('submit', sendMessage);
+        nextChatButton.addEventListener('click', findOrCreateChat); // Next chat also finds/creates a new one
+        suggestIcebreakerButton.addEventListener('click', suggestIcebreaker);
+        suggestTopicButton.addEventListener('click', suggestTopic);
+
+
+        // Firebase Initialization and Authentication
+        window.onload = async function() {
+            try {
+                // Access global variables provided by the Canvas environment
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                // Define Firestore collection paths using appId
+                CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
+                USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
+
+                // Initialize Firebase app
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Listen for authentication state changes
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in
+                        userId = user.uid;
+                        userIdDisplay.textContent = userId;
+                        // Initial state: show start chat button
+                        initialSection.classList.remove('hidden');
+                        startChatButton.classList.remove('hidden');
+                        waitingMessage.classList.add('hidden');
+                        chatSection.classList.add('hidden');
+                    } else {
+                        // No user is signed in, attempt anonymous sign-in or custom token sign-in
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("Firebase authentication error:", error);
+                            userIdDisplay.textContent = 'Error getting User ID';
+                        }
+                    }
+                });
+
+                // Handle user leaving the page
+                window.addEventListener('beforeunload', () => {
+                    updateUserOnlineStatus('offline');
+                    if (chatUnsubscribe) chatUnsubscribe();
+                    if (userStatusUnsubscribe) userStatusUnsubscribe();
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                userIdDisplay.textContent = 'Error initializing Firebase';
+            }
+        };
+    </script>
 </body>
 </html>
