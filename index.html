@@ -61,7 +61,7 @@
             display: flex;
             flex-direction: column;
             min-height: 200px; /* Minimum height for chat area */
-            max-height: calc(100vh - 250px); /* Max height relative to viewport */
+            max-height: calc(100vh - 300px); /* Max height relative to viewport, considering input and buttons */
             overflow-y: auto; /* Scrollable chat area */
             border: 1px solid #374151;
             flex-grow: 1; /* Allows it to grow within a flex parent */
@@ -100,12 +100,15 @@
             .wave-bg {
                 height: 200px; /* Increase wave height on larger screens */
             }
+             .actual-chat-container {
+                max-height: calc(100vh - 350px);
+            }
         }
 
         @media (min-width: 1024px) { /* lg breakpoint and up */
             .actual-chat-container {
                 height: 300px; /* Specific height for larger desktop screens */
-                max-height: none; /* Remove max-height constraint if fixed height is desired */
+                max-height: 400px; /* Adjust if needed */
             }
         }
 
@@ -142,13 +145,13 @@
                 <a href="index.html" class="block mt-4 lg:inline-block lg:mt-0 text-white mr-4">
                     Home
                 </a>
-                <a href="blog.html" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
                     Blog
                 </a>
-                <a href="about.html" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white mr-4">
                     About
                 </a>
-                <a href="support.html" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white">
+                <a href="#" class="block mt-4 lg:inline-block lg:mt-0 text-purple-200 hover:text-white">
                     Support
                 </a>
             </div>
@@ -180,7 +183,7 @@
             </div>
         </div>
 
-        <div class="lg:w-1/2 flex justify-center lg:justify-end relative z-10">
+        <div class="lg:w-1/2 flex justify-center lg:justify-end relative z-10 mt-10 lg:mt-0">
             <div id="initial-mockup" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
@@ -190,7 +193,6 @@
                         <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800" src="https://placehold.co/32x32/333333/ffffff?text=T" alt="User 3">
                     </div>
                 </div>
-
                 <div class="flex flex-col space-y-3 mb-6">
                     <div class="flex items-start">
                         <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 mr-2" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="Jon Snow">
@@ -213,49 +215,63 @@
                         <img class="rounded-lg w-full h-24 object-cover" src="https://placehold.co/120x96/2c3e50/ecf0f1?text=Video+Feed+4" alt="Video Feed 4">
                     </div>
                 </div>
-                
                 <div class="mt-6 pt-4 border-t border-gray-700">
                     <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
                     <div class="grid grid-cols-2 gap-3 text-sm">
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag">
-                            <span>USA</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag">
-                            <span>Germany</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag">
-                            <span>India</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag">
-                            <span>Italy</span>
-                        </div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag"><span>USA</span></div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag"><span>Germany</span></div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag"><span>India</span></div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag"><span>Italy</span></div>
                     </div>
                 </div>
             </div>
 
-            <div id="actual-chat" class="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg hidden absolute lg:relative lg:top-auto lg:left-auto">
+            <div id="actual-chat" class="bg-gray-800 bg-opacity-80 backdrop-blur-md p-4 sm:p-6 rounded-xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg hidden flex flex-col">
                 <h2 class="text-xl font-semibold text-white mb-4 text-center">Random Chat</h2>
                 <div id="actual-chat-messages" class="actual-chat-container mb-4">
-                </div>
-                <div class="flex">
+                    </div>
+                <div class="flex mb-3">
                     <input type="text" id="actual-chat-input" placeholder="Type your message..." class="flex-grow bg-gray-700 text-white p-3 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-600">
                     <button id="actual-send-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-5 rounded-r-lg transition duration-300 ease-in-out">
                         Send
                     </button>
                 </div>
-                <button id="actual-end-chat-btn" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-full transition duration-300 ease-in-out">
-                    End Chat
-                </button>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                     <button id="actual-skip-chat-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
+                        New Chat
+                    </button>
+                    <button id="actual-request-photo-btn" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
+                        Request Photo
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="actual-report-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
+                        Report User
+                    </button>
+                    <button id="actual-end-chat-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-full transition duration-300 ease-in-out text-sm">
+                        End Chat
+                    </button>
+                </div>
             </div>
         </div>
     </main>
 
-    <footer class="p-4 text-center text-gray-500 text-sm mt-8">
-        &copy; 2025 RandomChat365. All rights reserved.
+    <div id="nickname-prompt" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-gray-900 p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-2xl font-semibold text-white mb-6">Enter Your Nickname</h2>
+            <input type="text" id="nickname-input" placeholder="Your Nickname" class="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-600 mb-6">
+            <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <button id="start-with-nickname-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full transition duration-300">
+                    Start Chatting
+                </button>
+                <button id="cancel-nickname-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-full transition duration-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="p-4 text-center text-gray-500 text-sm mt-auto"> &copy; 2025 RandomChat365. All rights reserved.
     </footer>
 
     <script>
@@ -265,25 +281,56 @@
             navContent.classList.toggle('hidden');
         });
 
-        // Custom alert function to replace window.alert
-        function alert(message) {
+        // Custom alert function
+        function customAlert(message, title = "Notification") {
             const alertBox = document.createElement('div');
-            alertBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            alertBox.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4'; // Increased z-index
             alertBox.innerHTML = `
-                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white text-center max-w-sm mx-auto">
-                    <p class="text-lg mb-4">${message}</p>
-                    <button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full" onclick="this.parentNode.parentNode.remove()">
+                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white max-w-sm mx-auto w-full">
+                    <h3 class="text-xl font-semibold mb-3 text-purple-300">${title}</h3>
+                    <p class="text-md mb-5">${message}</p>
+                    <button class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full" onclick="this.closest('.fixed').remove()">
                         OK
                     </button>
                 </div>
             `;
             document.body.appendChild(alertBox);
         }
+        
+        // Custom confirm function
+        function customConfirm(message, onOk, onCancel, title = "Confirm Action") {
+            const confirmBox = document.createElement('div');
+            confirmBox.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4'; // Increased z-index
+            confirmBox.innerHTML = `
+                <div class="bg-gray-900 p-6 rounded-lg shadow-xl text-white max-w-sm mx-auto w-full">
+                    <h3 class="text-xl font-semibold mb-3 text-yellow-400">${title}</h3>
+                    <p class="text-md mb-6">${message}</p>
+                    <div class="flex justify-end space-x-3">
+                        <button class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-5 rounded-full" id="confirm-cancel-btn-custom">
+                            Cancel
+                        </button>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-full" id="confirm-ok-btn-custom">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmBox);
+
+            document.getElementById('confirm-ok-btn-custom').addEventListener('click', () => {
+                confirmBox.remove();
+                if (onOk) onOk();
+            });
+
+            document.getElementById('confirm-cancel-btn-custom').addEventListener('click', () => {
+                confirmBox.remove();
+                if (onCancel) onCancel();
+            });
+        }
+
 
         // --- Socket.IO Client-side Logic ---
-        // Connect to the Socket.IO server running on localhost:3000
-        // IMPORTANT: If you deploy your backend, replace 'http://localhost:3000' with your deployed backend URL.
-        const socket = io('http://localhost:3000');
+        const socket = io('http://localhost:3000'); // IMPORTANT: Replace with your deployed backend URL if necessary
 
         const textChatBtn = document.getElementById('text-chat-btn');
         const videoChatBtn = document.getElementById('video-chat-btn');
@@ -292,131 +339,257 @@
         const actualChatMessages = document.getElementById('actual-chat-messages');
         const actualChatInput = document.getElementById('actual-chat-input');
         const actualSendBtn = document.getElementById('actual-send-btn');
+        
         const actualEndChatBtn = document.getElementById('actual-end-chat-btn');
+        const actualSkipChatBtn = document.getElementById('actual-skip-chat-btn');
+        const actualRequestPhotoBtn = document.getElementById('actual-request-photo-btn');
+        const actualReportBtn = document.getElementById('actual-report-btn');
 
-        let currentPartnerId = null; // To store the ID of the connected partner
+        const nicknamePrompt = document.getElementById('nickname-prompt');
+        const nicknameInput = document.getElementById('nickname-input');
+        const startWithNicknameBtn = document.getElementById('start-with-nickname-btn');
+        const cancelNicknameBtn = document.getElementById('cancel-nickname-btn');
+
+        let userNickname = 'You'; 
+        let partnerNickname = 'Stranger';
+        let currentPartnerId = null;
 
         // Event listener for "Text Chat" button
         textChatBtn.addEventListener('click', () => {
-            // Change initial mockup content to "Connecting..." state
+            nicknamePrompt.classList.remove('hidden');
+            nicknameInput.value = userNickname === 'You' ? '' : userNickname; // Pre-fill if nickname exists
+            nicknameInput.focus();
+            initialMockup.classList.add('hidden');
+            actualChat.classList.add('hidden');
+        });
+
+        cancelNicknameBtn.addEventListener('click', () => {
+            nicknamePrompt.classList.add('hidden');
+            if (!currentPartnerId) { // Only show main mockup if not in an active chat that was hidden
+                 resetChatInterface();
+            } else { // If a chat was active, re-show it or the connecting screen
+                actualChat.classList.remove('hidden'); // Or logic to show initialMockup if was connecting
+            }
+        });
+
+        startWithNicknameBtn.addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                userNickname = nickname;
+            } else {
+                userNickname = 'User' + Math.floor(Math.random() * 10000);
+            }
+            nicknamePrompt.classList.add('hidden');
+
             initialMockup.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full py-20">
                     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-                    <p class="text-xl font-semibold text-white">Connecting to a random stranger...</p>
+                    <p class="text-xl font-semibold text-white">Connecting as ${userNickname}...</p>
                 </div>
             `;
-            initialMockup.classList.remove('hidden'); // Ensure mockup is visible
-            actualChat.classList.add('hidden');        // Ensure actual chat is hidden
-
-            // Emit event to backend to join chat
-            socket.emit('join_chat');
+            initialMockup.classList.remove('hidden');
+            actualChat.classList.add('hidden');
+            socket.emit('join_chat', { nickname: userNickname });
         });
-
-        // Event listener for "Video Chat" button
+        
         videoChatBtn.addEventListener('click', function() {
-            alert('Video Chat functionality requires advanced WebRTC implementation and a robust backend. Coming soon!');
+            customAlert('Video Chat functionality requires advanced WebRTC implementation and a robust backend. Coming soon!', 'Feature Update');
         });
 
-        // Event listener for sending messages
         actualSendBtn.addEventListener('click', sendMessage);
         actualChatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.shiftKey) { // Send on Enter, allow Shift+Enter for newline
+                e.preventDefault(); // Prevents adding a newline in the input
                 sendMessage();
             }
         });
 
-        // Event listener for ending chat
         actualEndChatBtn.addEventListener('click', endChat);
+        actualSkipChatBtn.addEventListener('click', skipChat);
+        actualRequestPhotoBtn.addEventListener('click', requestPhoto);
+        actualReportBtn.addEventListener('click', reportUser);
 
         // --- Socket.IO Event Handlers ---
-
-        // When connected to the server
         socket.on('connect', () => {
             console.log('Connected to backend server:', socket.id);
-            // You might want to update a status indicator here
         });
 
-        // When waiting for a partner
         socket.on('waiting_for_partner', () => {
+            nicknamePrompt.classList.add('hidden');
+            actualChat.classList.add('hidden');
             initialMockup.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full py-20">
                     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-                    <p class="text-xl font-semibold text-white">Waiting for a chat partner...</p>
+                    <p class="text-xl font-semibold text-white">Waiting for a partner as ${userNickname}...</p>
                 </div>
             `;
+            initialMockup.classList.remove('hidden');
             console.log('Waiting for a chat partner...');
         });
 
-        // When a partner is found
         socket.on('partner_found', (data) => {
-            console.log('Partner found! Room ID:', data.roomId, 'Partner ID:', data.partnerId);
-            currentPartnerId = data.partnerId; // Store partner ID
+            console.log('Partner found! Room ID:', data.roomId, 'Partner ID:', data.partnerId, 'Partner Nickname:', data.partnerNickname);
+            currentPartnerId = data.partnerId;
+            partnerNickname = data.partnerNickname || 'Stranger';
 
-            // *** IMPORTANT FIX: Show actual chat, hide initial mockup ***
-            initialMockup.classList.add('hidden');    // HIDE the initial mockup
-            actualChat.classList.remove('hidden');    // SHOW the actual chat dialog
-            // ************************************************************
-
+            initialMockup.classList.add('hidden');
+            actualChat.classList.remove('hidden');
+            
             actualChatMessages.innerHTML = ''; // Clear previous messages
-            appendMessage('You are now connected to a random stranger!', 'system');
+            appendMessage(`You are now connected to ${partnerNickname}! Say hi!`, 'system');
             actualChatInput.focus();
         });
 
-        // When a chat message is received
         socket.on('chat_message', (data) => {
+            // Assumes backend sends: { message: 'text', sender: socket.id, nickname: 'senderNickname' }
             const senderType = (data.sender === socket.id) ? 'user' : 'stranger';
-            appendMessage(data.message, senderType);
+            // Use nickname from data if available, otherwise use stored nicknames
+            const displayName = data.nickname || (senderType === 'user' ? userNickname : partnerNickname);
+            appendMessage(data.message, senderType, displayName);
         });
 
-        // When the partner disconnects or ends the chat
         socket.on('partner_disconnected', (data) => {
-            appendMessage(data.message || 'Your chat partner has disconnected.', 'system');
-            alert(data.message || 'Your chat partner has disconnected.');
+            if(actualChat.classList.contains('hidden')) return; // Don't show if already resetting/skipped
+            appendMessage(data.message || `${partnerNickname} has disconnected.`, 'system');
+            customAlert(data.message || `${partnerNickname} has disconnected. You can find a new partner.`, 'Chat Ended');
             resetChatInterface();
         });
 
-        // When your own chat session ends (e.g., you clicked end chat)
         socket.on('chat_ended', () => {
-            alert('Chat ended successfully.');
+            // This event is typically received after *you* initiated an end_chat
+            customAlert('Chat ended successfully.', 'Chat Ended');
             resetChatInterface();
         });
 
-        // When disconnected from the server
         socket.on('disconnect', () => {
             console.log('Disconnected from backend server.');
-            alert('Disconnected from the chat server. Please try again.');
-            resetChatInterface();
+            customAlert('Disconnected from the chat server. Please check your connection and refresh the page.', 'Connection Lost');
+            resetChatInterface(); // Reset to main page, as connection is lost
         });
 
-        // Function to append messages to the chat display
-        function appendMessage(text, type) {
+        // Demo photo request events
+        socket.on('photo_request_received', (data) => { // data: { from: partnerSocketId, fromNickname: 'PartnerNick' }
+            customConfirm(`${data.fromNickname || 'Your partner'} is requesting to see a photo. (Demo: No actual photo sharing will occur). Do you "accept" (mock)?`, 
+            () => {
+                customAlert(`You "accepted" the photo request from ${data.fromNickname || 'your partner'}.`, 'Photo Request');
+                socket.emit('photo_request_response', { to: data.from, fromNickname: userNickname, status: 'accepted_demo' });
+            }, 
+            () => {
+                customAlert(`You "declined" the photo request from ${data.fromNickname || 'your partner'}.`, 'Photo Request');
+                socket.emit('photo_request_response', { to: data.from, fromNickname: userNickname, status: 'declined_demo' });
+            }, 'Photo Request Received');
+        });
+
+        socket.on('photo_request_response_status', (data) => { // data: { partnerNickname: 'PartnerNick', status: 'accepted_demo' | 'declined_demo' }
+             customAlert(`${data.partnerNickname || 'Your partner'} responded to your photo request: ${data.status.replace('_demo', '')}. (This is a demo notification)`, 'Photo Request Update');
+        });
+
+
+        // Function to append messages
+        function appendMessage(text, type, senderNameForDisplay) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `actual-chat-message ${type}`;
-            messageDiv.textContent = text;
+
+            // Create a text node for the message content to prevent XSS from user-supplied message text
+            const messageTextNode = document.createTextNode(text);
+
+            if (type === 'user' || type === 'stranger') {
+                const strong = document.createElement('strong');
+                strong.className = 'font-semibold block mb-0.5'; // Nickname on its own line for clarity
+                strong.textContent = (senderNameForDisplay || (type === 'user' ? userNickname : partnerNickname)) + ":";
+                messageDiv.appendChild(strong);
+                messageDiv.appendChild(messageTextNode);
+            } else { // System messages
+                messageDiv.textContent = text; 
+            }
+
             actualChatMessages.appendChild(messageDiv);
-            actualChatMessages.scrollTop = actualChatMessages.scrollHeight; // Scroll to bottom
+            actualChatMessages.scrollTop = actualChatMessages.scrollHeight;
         }
 
-        // Function to send a message
         function sendMessage() {
             const messageText = actualChatInput.value.trim();
-            if (messageText) {
-                socket.emit('chat_message', { message: messageText });
-                actualChatInput.value = ''; // Clear input
+            if (messageText && currentPartnerId) {
+                socket.emit('chat_message', { message: messageText /*, recipientId: currentPartnerId */ }); 
+                // My own message will be echoed back via 'chat_message' from server with my ID and nickname.
+                // Or, append directly: appendMessage(messageText, 'user', userNickname); 
+                // Current setup relies on server echo for consistency.
+                actualChatInput.value = '';
+            } else if (!currentPartnerId) {
+                customAlert("You are not connected to anyone to send a message.", "Error");
             }
         }
 
-        // Function to end the chat
         function endChat() {
-            socket.emit('end_chat');
+            if (!currentPartnerId && actualChat.classList.contains('hidden')) {
+                // If not in a chat and chat window is hidden, do nothing or go to main screen
+                resetChatInterface();
+                return;
+            }
+            customConfirm('Are you sure you want to end this chat session and return to the main screen?', () => {
+                socket.emit('end_chat'); 
+                // Server should handle cleanup and may send 'chat_ended' or 'partner_disconnected' to the other user.
+                // The client that clicked 'end' will get 'chat_ended' and then resetChatInterface.
+            }, null, 'End Chat');
         }
 
-        // Function to reset the UI to the initial state (showing the original mockup)
-        function resetChatInterface() {
-            actualChat.classList.add('hidden'); // Hide the actual chat
-            initialMockup.classList.remove('hidden'); // Show the initial mockup
+        function skipChat() {
+             if (!currentPartnerId) {
+                customAlert("You are not in a chat to skip. Click 'Text Chat' to start.", "Not in Chat");
+                return;
+            }
+            customConfirm('Find a new chat partner? Your current chat will end.', () => {
+                appendMessage('Looking for a new partner...', 'system'); // Optional: message in current chat before it switches
+                socket.emit('leave_current_chat'); // Inform server to disconnect this user from current partner
 
-            // Re-populate initial mockup content (original state)
+                actualChat.classList.add('hidden');
+                initialMockup.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full py-20">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+                        <p class="text-xl font-semibold text-white">Searching for new partner as ${userNickname}...</p>
+                    </div>
+                `;
+                initialMockup.classList.remove('hidden');
+                
+                actualChatMessages.innerHTML = ''; // Clear messages from the old chat
+                currentPartnerId = null;
+                partnerNickname = 'Stranger';
+
+                socket.emit('join_chat', { nickname: userNickname }); // Request a new chat
+            }, null, 'New Chat');
+        }
+
+        function requestPhoto() {
+            if (currentPartnerId) {
+                customConfirm(`Send a (demo) photo request to ${partnerNickname}?`, () => {
+                    socket.emit('request_photo', { to: currentPartnerId, fromNickname: userNickname });
+                    appendMessage(`You sent a photo request to ${partnerNickname}. (Demo)`, 'system');
+                    customAlert('Photo request sent. This is a demo; no actual photos are transferred.', 'Photo Request Sent');
+                });
+            } else {
+                customAlert('You are not connected to anyone to request a photo.', "Error");
+            }
+        }
+
+        function reportUser() {
+            if (currentPartnerId) {
+                customConfirm(`Are you sure you want to report ${partnerNickname}? This helps us keep the community safe.`, () => {
+                    socket.emit('report_user', { reportedUserId: currentPartnerId, reportedUserNickname: partnerNickname });
+                    customAlert(`${partnerNickname} has been reported. Our moderation team will review this. Thank you.`, 'User Reported');
+                    // Optionally, you might want to automatically skip the user after reporting.
+                    // skipChat(); // Uncomment to auto-skip after reporting
+                }, null, 'Report User');
+            } else {
+                customAlert('You are not connected to anyone to report.', "Error");
+            }
+        }
+
+        function resetChatInterface() {
+            actualChat.classList.add('hidden');
+            nicknamePrompt.classList.add('hidden');
+            initialMockup.classList.remove('hidden'); 
+            
+            // Restore original mockup content
             initialMockup.innerHTML = `
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-xs text-purple-300 px-3 py-1 bg-purple-900 rounded-full">New Notification</span>
@@ -429,16 +602,10 @@
                 <div class="flex flex-col space-y-3 mb-6">
                     <div class="flex items-start">
                         <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 mr-2" src="https://placehold.co/32x32/4a90e2/ffffff?text=J" alt="Jon Snow">
-                        <div>
-                            <p class="text-sm font-semibold text-white">Jon Snow</p>
-                            <span class="chat-bubble text-sm text-gray-200">I don't know anything !</span>
-                        </div>
+                        <div><p class="text-sm font-semibold text-white">Jon Snow</p><span class="chat-bubble text-sm text-gray-200">I don't know anything !</span></div>
                     </div>
                     <div class="flex items-end justify-end">
-                        <div class="text-right">
-                            <p class="text-sm font-semibold text-white">TheLostWanderer</p>
-                            <span class="chat-bubble chat-bubble-user text-sm">Hello there!</span>
-                        </div>
+                        <div class="text-right"><p class="text-sm font-semibold text-white">TheLostWanderer</p><span class="chat-bubble chat-bubble-user text-sm">Hello there!</span></div>
                         <img class="inline-block h-8 w-8 rounded-full ring-2 ring-gray-800 ml-2" src="https://placehold.co/32x32/6a0dad/ffffff?text=U" alt="TheLostWanderer">
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-4">
@@ -451,27 +618,17 @@
                 <div class="mt-6 pt-4 border-t border-gray-700">
                     <p class="text-sm font-semibold mb-3 text-white">Country Filter</p>
                     <div class="grid grid-cols-2 gap-3 text-sm">
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag">
-                            <span>USA</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag">
-                            <span>Germany</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag">
-                            <span>India</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag">
-                            <span>Italy</span>
-                        </div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/us.svg" alt="USA Flag"><span>USA</span></div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/de.svg" alt="Germany Flag"><span>Germany</span></div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/in.svg" alt="India Flag"><span>India</span></div>
+                        <div class="flex items-center space-x-2"><img class="country-flag" src="https://flagcdn.com/it.svg" alt="Italy Flag"><span>Italy</span></div>
                     </div>
                 </div>
             `;
-            // Clear currentPartnerId when chat ends
             currentPartnerId = null;
+            partnerNickname = 'Stranger'; 
+            // userNickname is intentionally persisted for the session unless changed by user
+            actualChatMessages.innerHTML = ''; // Clear chat messages
         }
     </script>
 </body>
