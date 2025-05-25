@@ -31,7 +31,7 @@
 
         /* Modal specific styles */
         .modal {
-            display: none; /* Hidden by default */
+            display: none; /* Hidden by default, controlled by JS */
             position: fixed; /* Stay in place */
             z-index: 100; /* Sit on top */
             left: 0;
@@ -40,9 +40,8 @@
             height: 100%; /* Full height */
             overflow: auto; /* Enable scroll if needed */
             background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: center; /* For flexbox centering */
+            justify-content: center; /* For flexbox centering */
         }
         .modal-content {
             background-color: #1f2937; /* gray-800 */
@@ -61,19 +60,19 @@
     <div id="app-container" class="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col h-[80vh] sm:h-[70vh]">
         <h1 class="text-3xl font-bold text-center mb-6 text-indigo-400">Live Random Chat</h1>
 
-        <div class="text-sm text-gray-400 text-center mb-4">
-            User: <span id="userIdDisplay" class="font-mono text-indigo-300 break-all">Loading...</span>
-        </div>
+        <div id="userInfoSection" class="text-sm text-gray-400 text-center mb-4">
+            <span id="userIdDisplay" class="font-mono text-indigo-300 hidden"></span>
+            </div>
 
         <div id="nicknameSection" class="flex-grow flex items-center justify-center flex-col p-4 space-y-4">
             <label for="nicknameInput" class="text-lg text-gray-300">Choose your nickname:</label>
-            <input type="text" id="nicknameInput" placeholder="e.g., Stranger" maxlength="20"
+            <input type="text" id="nicknameInput" placeholder="Stranger" maxlength="20"
                    class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400 text-center" />
             <button id="setNicknameButton"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
                 Start Chat
             </button>
-            <p id="waitingMessage" class="text-gray-400 mt-4 hidden">Waiting for a chat partner...</p>
+            <p id="waitingMessage" class="text-gray-400 mt-4 hidden">Finding a stranger...</p>
         </div>
 
 
@@ -108,7 +107,7 @@
         </div>
     </div>
 
-    <div id="ageConfirmationModal" class="modal hidden">
+    <div id="ageConfirmationModal" class="modal">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-white">Confirm Your Age</h2>
             <p class="text-gray-300 mb-6">By clicking "Confirm", you assert that you are 18 years or older and agree to our terms.</p>
@@ -123,7 +122,7 @@
         </div>
     </div>
 
-    <div id="skipChatConfirmationModal" class="modal hidden">
+    <div id="skipChatConfirmationModal" class="modal">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-white">End Current Chat?</h2>
             <p class="text-gray-300 mb-6">Are you sure you want to end this chat and find a new partner?</p>
@@ -138,7 +137,7 @@
         </div>
     </div>
 
-    <div id="reportModal" class="modal hidden">
+    <div id="reportModal" class="modal">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-white">Report User</h2>
             <p class="text-gray-300 mb-4">Please select a reason for reporting:</p>
@@ -165,7 +164,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
 
@@ -184,7 +183,8 @@
         let isAgeConfirmed = false;
 
         // DOM Elements
-        const userIdDisplay = document.getElementById('userIdDisplay');
+        const userInfoSection = document.getElementById('userInfoSection'); // New container for user info
+        const userIdDisplay = document.getElementById('userIdDisplay'); // This will eventually show nickname
         const nicknameSection = document.getElementById('nicknameSection');
         const nicknameInput = document.getElementById('nicknameInput');
         const setNicknameButton = document.getElementById('setNicknameButton');
@@ -240,14 +240,17 @@
                 let bubbleClass = '';
                 let senderLabel = '';
 
+                // Get the nickname from the message if available, otherwise default
+                const displayNickname = msg.senderNickname || 'Stranger';
+
                 if (msg.senderId === userId) {
                     alignmentClass = 'justify-end';
                     bubbleClass = 'bg-indigo-500 text-white rounded-br-none';
-                    senderLabel = 'You';
+                    senderLabel = 'You'; // Always "You" for the local user
                 } else {
                     alignmentClass = 'justify-start';
                     bubbleClass = 'bg-gray-600 text-gray-100 rounded-bl-none';
-                    senderLabel = msg.senderNickname || 'Stranger'; // Use senderNickname
+                    senderLabel = displayNickname; // Use the received nickname for the partner
                 }
 
                 messageDiv.className = `flex ${alignmentClass}`;
@@ -342,10 +345,14 @@
             currentChatId = null;
             messages = []; // Clear messages array
             renderMessages(); // Clear messages from UI
-            nicknameSection.classList.remove('hidden'); // Show nickname section again
-            setNicknameButton.textContent = 'Start Chat'; // Reset button text
+
+            // Reset UI to nickname entry
+            nicknameSection.classList.remove('hidden');
             waitingMessage.classList.add('hidden');
             chatSection.classList.add('hidden');
+            userInfoSection.classList.add('hidden'); // Hide user info during setup
+            setNicknameButton.textContent = 'Start Chat'; // Ensure button text is "Start Chat" for new session
+
             updateUserOnlineStatus('offline'); // Ensure user is removed from online list
         };
 
@@ -356,21 +363,24 @@
                 return;
             }
             if (!isAgeConfirmed) {
-                ageConfirmationModal.classList.remove('hidden');
+                ageConfirmationModal.style.display = 'flex'; // Show modal using flex for centering
                 return;
             }
 
-            endCurrentChat(); // Clear previous chat state and reset UI
+            endCurrentChat(); // Clear previous chat state and reset UI to base before searching
 
             nicknameSection.classList.add('hidden');
-            waitingMessage.classList.remove('hidden');
+            userInfoSection.classList.add('hidden'); // Hide info during waiting
+            waitingMessage.classList.remove('hidden'); // Show "Finding stranger..."
             chatSection.classList.add('hidden');
+            setNicknameButton.textContent = 'Finding Stranger...'; // Update button text temporarily
 
 
             try {
-                // Look for an available partner
+                // First, try to find an active partner in the `users_online` collection
+                // We're looking for ANY user online, excluding ourselves.
                 const usersOnlineRef = collection(db, USERS_ONLINE_COLLECTION_PATH);
-                const q = query(usersOnlineRef, where("nickname", "!=", userNickname)); // Try to find someone with a different nickname
+                const q = query(usersOnlineRef, limit(1)); // Just get one
                 const onlineUsersSnapshot = await getDocs(q);
 
                 let foundPartnerId = null;
@@ -380,13 +390,12 @@
                     if (docSnapshot.id !== userId) { // Don't match with self
                         foundPartnerId = docSnapshot.id;
                         foundPartnerNickname = docSnapshot.data().nickname || 'Stranger';
-                        break; // Exit loop early
+                        break;
                     }
                 }
 
-
                 if (foundPartnerId) {
-                    // Found a partner, create a new chat
+                    // Found a partner, create a new chat document
                     const newChatRef = await addDoc(collection(db, CHATS_COLLECTION_PATH), {
                         users: {
                             [userId]: userNickname,
@@ -396,34 +405,43 @@
                         status: 'active'
                     });
                     currentChatId = newChatRef.id;
-                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, foundPartnerId)); // Remove partner from waiting list
-                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId)); // Remove self from waiting list if was there
+
+                    // Immediately remove both users from the online waiting list
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, foundPartnerId));
+                    await deleteDoc(doc(db, USERS_ONLINE_COLLECTION_PATH, userId));
+
                     startListeningToChat();
+
                 } else {
                     // No partner found, add self to waiting list
-                    await updateUserOnlineStatus('online'); // Includes nickname
-                    waitingMessage.textContent = "Waiting for a chat partner...";
+                    await updateUserOnlineStatus('online'); // This adds us to `users_online` with our nickname
+                    waitingMessage.textContent = "Finding a stranger...";
 
-                    // Listen for any chat documents that include the current user
+                    // Listen for incoming chats that include this user
                     const chatsRef = collection(db, CHATS_COLLECTION_PATH);
-                    const qUserChats = query(chatsRef, where(`users.${userId}`, "!=", null), where("status", "==", "active"));
+                    const qUserChats = query(
+                        chatsRef,
+                        where(`users.${userId}`, "!=", null), // Check if our UID exists as a key in the 'users' map
+                        where("status", "==", "active")
+                    );
+
                     chatUnsubscribe = onSnapshot(qUserChats, (snapshot) => {
-                        snapshot.docChanges().forEach(change => {
+                        snapshot.docChanges().forEach(async (change) => {
                             if (change.type === 'added' || (change.type === 'modified' && change.doc.data().status === 'active')) {
                                 const chatData = change.doc.data();
-                                // Check if this chat includes us and is active
-                                if (chatData.users.hasOwnProperty(userId)) {
+                                if (chatData.users.hasOwnProperty(userId)) { // Double-check we are part of this chat
                                     currentChatId = change.doc.id;
                                     startListeningToChat();
-                                    updateUserOnlineStatus('offline'); // Remove from online list once chat established
+                                    // Once a chat is established, ensure we are removed from the waiting list
+                                    await updateUserOnlineStatus('offline');
                                     if (userStatusUnsubscribe) {
                                         userStatusUnsubscribe();
-                                        userStatusUnsubscribe = null;
+                                        userStatusUnsubscribe = null; // Stop listening to online users
                                     }
                                 }
                             } else if (change.type === 'modified' && change.doc.data().status === 'ended' && change.doc.id === currentChatId) {
                                 // If current chat is marked as ended by partner
-                                endCurrentChat();
+                                endCurrentChat(); // This will trigger a new search if the user initiated it
                             }
                         });
                     });
@@ -431,8 +449,8 @@
             } catch (error) {
                 console.error("Error finding or creating chat:", error);
                 waitingMessage.textContent = "Error finding partner. Please try again.";
-                nicknameSection.classList.remove('hidden');
-                setNicknameButton.classList.remove('hidden');
+                nicknameSection.classList.remove('hidden'); // Show nickname input on error
+                setNicknameButton.textContent = 'Start Chat'; // Reset button text
             }
         };
 
@@ -445,20 +463,26 @@
                 chatUnsubscribe();
                 chatUnsubscribe = null;
             }
-            // Unsubscribe from user status listener if active
+            // Unsubscribe from user status listener if active (from waiting)
             if (userStatusUnsubscribe) {
                 userStatusUnsubscribe();
                 userStatusUnsubscribe = null;
             }
 
-            // Hide initial section, show chat section
-            nicknameSection.classList.add('hidden');
+            // Hide waiting message, show chat section
+            waitingMessage.classList.add('hidden');
+            nicknameSection.classList.add('hidden'); // Hide nickname input
             chatSection.classList.remove('hidden');
-            nextChatButton.textContent = 'End & Next Chat'; // Ensure button text is correct when chat starts
+            userInfoSection.classList.remove('hidden'); // Show user info (nickname)
+            userIdDisplay.textContent = `You are: ${userNickname}`;
+            userIdDisplay.classList.remove('hidden');
+
+
+            nextChatButton.textContent = 'End & Next Chat'; // Button text for active chat
 
             // Listen for messages in the current chat
             const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
-            chatUnsubscribe = onSnapshot(query(messagesRef), (snapshot) => { // Query for potential sorting
+            chatUnsubscribe = onSnapshot(query(messagesRef), (snapshot) => {
                 const newMessages = [];
                 snapshot.forEach(doc => {
                     newMessages.push({ id: doc.id, ...doc.data() });
@@ -593,7 +617,7 @@
                     timestamp: serverTimestamp() // Use server timestamp for accuracy
                 });
                 alert("Report submitted successfully.");
-                reportModal.classList.add('hidden');
+                reportModal.style.display = 'none'; // Hide modal
                 reportDetails.value = ''; // Clear details
                 reportReason.value = 'Inappropriate Content'; // Reset dropdown
             } catch (error) {
@@ -605,31 +629,32 @@
         // Event Listeners
         setNicknameButton.addEventListener('click', () => {
             const nickname = nicknameInput.value.trim();
-            userNickname = nickname === "" ? "Stranger" : nickname;
-            userIdDisplay.textContent = userNickname;
+            userNickname = nickname === "" ? "Stranger" : nickname; // Set default if empty
+            // userIdDisplay.textContent = `You are: ${userNickname}`; // Updated when chat starts
             findOrCreateChat(); // Initiate chat after setting nickname and age confirmation
         });
 
         // Age confirmation button handlers
         confirmAgeButton.addEventListener('click', () => {
             isAgeConfirmed = true;
-            ageConfirmationModal.classList.add('hidden');
+            ageConfirmationModal.style.display = 'none'; // Hide modal
             findOrCreateChat(); // Re-attempt chat after confirmation
         });
         cancelAgeButton.addEventListener('click', () => {
             isAgeConfirmed = false;
-            ageConfirmationModal.classList.add('hidden');
+            ageConfirmationModal.style.display = 'none'; // Hide modal
             // User cancelled age confirmation, so they can't proceed to chat
             nicknameSection.classList.remove('hidden');
             waitingMessage.classList.add('hidden');
-            setNicknameButton.textContent = 'Start Chat';
+            setNicknameButton.textContent = 'Start Chat'; // Reset button text
+            userInfoSection.classList.add('hidden'); // Ensure info is hidden
         });
 
 
         // "End & Next Chat" button handler
         nextChatButton.addEventListener('click', () => {
             if (currentChatId) { // If currently in a chat, show confirmation
-                skipChatConfirmationModal.classList.remove('hidden');
+                skipChatConfirmationModal.style.display = 'flex'; // Show modal
             } else { // If not in a chat (e.g., after initial start), just find new
                 findOrCreateChat();
             }
@@ -637,20 +662,20 @@
 
         // Skip chat confirmation button handlers
         confirmSkipButton.addEventListener('click', () => {
-            skipChatConfirmationModal.classList.add('hidden');
+            skipChatConfirmationModal.style.display = 'none'; // Hide modal
             findOrCreateChat(); // End current chat and find new
         });
         cancelSkipButton.addEventListener('click', () => {
-            skipChatConfirmationModal.classList.add('hidden');
+            skipChatConfirmationModal.style.display = 'none'; // Hide modal
             // Do nothing, user decided not to skip
         });
 
 
         messageForm.addEventListener('submit', sendMessage);
         requestPhotoButton.addEventListener('click', requestPhoto);
-        reportButton.addEventListener('click', () => reportModal.classList.remove('hidden'));
+        reportButton.addEventListener('click', () => reportModal.style.display = 'flex'); // Show modal
         submitReportButton.addEventListener('click', submitReport);
-        cancelReportButton.addEventListener('click', () => reportModal.classList.add('hidden'));
+        cancelReportButton.addEventListener('click', () => reportModal.style.display = 'none'); // Hide modal
 
 
         // Firebase Initialization and Authentication
@@ -681,13 +706,18 @@
                 USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
                 REPORTS_COLLECTION_PATH = `/artifacts/${appId}/public/data/reports`;
 
+                // Hide modals initially (they are shown with JS explicitly)
+                ageConfirmationModal.style.display = 'none';
+                skipChatConfirmationModal.style.display = 'none';
+                reportModal.style.display = 'none';
+
 
                 // Listen for authentication state changes
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         // Display initial nickname or default 'Stranger'
-                        userIdDisplay.textContent = userNickname;
+                        // userIdDisplay.textContent = `User ID: ${userId}`; // This is hidden initially
                         // Show nickname input section
                         nicknameSection.classList.remove('hidden');
                         chatSection.classList.add('hidden');
@@ -697,7 +727,7 @@
                             await signInAnonymously(auth);
                         } catch (error) {
                             console.error("Firebase authentication error:", error);
-                            userIdDisplay.textContent = 'Error getting User ID';
+                            // userIdDisplay.textContent = 'Error getting User ID'; // This is hidden initially
                             alert("Failed to authenticate with Firebase. Please try again later.");
                         }
                     }
@@ -712,7 +742,7 @@
 
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
-                userIdDisplay.textContent = 'Error initializing Firebase';
+                // userIdDisplay.textContent = 'Error initializing Firebase'; // This is hidden initially
                 alert("Failed to initialize Firebase. Please check your console for errors.");
             }
         };
