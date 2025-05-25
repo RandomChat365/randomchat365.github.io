@@ -28,6 +28,32 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #4338ca; /* indigo-700 */
         }
+
+        /* Modal specific styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #1f2937; /* gray-800 */
+            margin: auto;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
@@ -36,20 +62,35 @@
         <h1 class="text-3xl font-bold text-center mb-6 text-indigo-400">Live Random Chat</h1>
 
         <div class="text-sm text-gray-400 text-center mb-4">
-            Your User ID: <span id="userIdDisplay" class="font-mono text-indigo-300 break-all">Loading...</span>
+            User: <span id="userIdDisplay" class="font-mono text-indigo-300 break-all">Loading...</span>
         </div>
 
-        <div id="initialSection" class="flex-grow flex items-center justify-center flex-col">
-            <button id="startChatButton"
+        <div id="nicknameSection" class="flex-grow flex items-center justify-center flex-col p-4 space-y-4">
+            <label for="nicknameInput" class="text-lg text-gray-300">Choose your nickname:</label>
+            <input type="text" id="nicknameInput" placeholder="e.g., Stranger" maxlength="20"
+                   class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-gray-400 text-center" />
+            <button id="setNicknameButton"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
                 Start Chat
             </button>
             <p id="waitingMessage" class="text-gray-400 mt-4 hidden">Waiting for a chat partner...</p>
         </div>
 
+
         <div id="chatSection" class="hidden flex-grow flex flex-col">
             <div id="messagesContainer" class="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-700 rounded-lg mb-4 custom-scrollbar">
                 </div>
+
+            <div class="flex gap-2 mb-2">
+                 <button id="requestPhotoButton"
+                    class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md text-sm transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 flex-none">
+                    Request Photo
+                </button>
+                <button id="reportButton"
+                    class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md text-sm transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-800 flex-none">
+                    Report
+                </button>
+            </div>
 
             <form id="messageForm" class="flex gap-2 mb-4">
                 <input type="text" id="messageInput" placeholder="Type your message..."
@@ -62,7 +103,61 @@
 
             <button id="nextChatButton"
                 class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800">
-                Next Chat
+                End & Next Chat
+            </button>
+        </div>
+    </div>
+
+    <div id="ageConfirmationModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4 text-white">Confirm Your Age</h2>
+            <p class="text-gray-300 mb-6">By clicking "Confirm", you assert that you are 18 years or older and agree to our terms.</p>
+            <button id="confirmAgeButton"
+                class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 mr-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Confirm
+            </button>
+            <button id="cancelAgeButton"
+                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <div id="skipChatConfirmationModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4 text-white">End Current Chat?</h2>
+            <p class="text-gray-300 mb-6">Are you sure you want to end this chat and find a new partner?</p>
+            <button id="confirmSkipButton"
+                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 mr-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Confirm
+            </button>
+            <button id="cancelSkipButton"
+                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4 text-white">Report User</h2>
+            <p class="text-gray-300 mb-4">Please select a reason for reporting:</p>
+            <select id="reportReason"
+                    class="w-full p-2 rounded-lg bg-gray-700 border border-gray-600 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Inappropriate Content">Inappropriate Content</option>
+                <option value="Harassment">Harassment</option>
+                <option value="Spam">Spam</option>
+                <option value="Other">Other</option>
+            </select>
+            <textarea id="reportDetails" rows="3" placeholder="Provide more details (optional)"
+                      class="w-full p-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 mb-6 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            <button id="submitReportButton"
+                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 mr-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Submit Report
+            </button>
+            <button id="cancelReportButton"
+                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 focus:outline-none focus:ring-2 focus="ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Cancel
             </button>
         </div>
     </div>
@@ -70,34 +165,59 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
 
         // Global variables for Firebase instances and user state
         let app;
         let db;
         let auth;
+        let storage; // Firebase Storage instance
         let userId = null;
+        let userNickname = "Stranger"; // Default nickname
         let currentChatId = null; // ID of the current chat document
         let chatUnsubscribe = null; // To unsubscribe from chat messages listener
         let userStatusUnsubscribe = null; // To unsubscribe from user status listener
         let appId; // Global variable for the application ID
         let messages = []; // Correctly defined globally here
+        let isAgeConfirmed = false;
 
         // DOM Elements
         const userIdDisplay = document.getElementById('userIdDisplay');
-        const initialSection = document.getElementById('initialSection');
-        const startChatButton = document.getElementById('startChatButton');
+        const nicknameSection = document.getElementById('nicknameSection');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const setNicknameButton = document.getElementById('setNicknameButton');
         const waitingMessage = document.getElementById('waitingMessage');
         const chatSection = document.getElementById('chatSection');
         const messagesContainer = document.getElementById('messagesContainer');
         const messageForm = document.getElementById('messageForm');
         const messageInput = document.getElementById('messageInput');
         const sendMessageButton = document.getElementById('sendMessageButton');
-        const nextChatButton = document.getElementById('nextChatButton');
+        const nextChatButton = document.getElementById('nextChatButton'); // This now acts as "End & Next Chat"
+        const requestPhotoButton = document.getElementById('requestPhotoButton');
+        const reportButton = document.getElementById('reportButton');
+
+        // Modal Elements
+        const ageConfirmationModal = document.getElementById('ageConfirmationModal');
+        const confirmAgeButton = document.getElementById('confirmAgeButton');
+        const cancelAgeButton = document.getElementById('cancelAgeButton');
+
+        const skipChatConfirmationModal = document.getElementById('skipChatConfirmationModal');
+        const confirmSkipButton = document.getElementById('confirmSkipButton');
+        const cancelSkipButton = document.getElementById('cancelSkipButton');
+
+        const reportModal = document.getElementById('reportModal');
+        const reportReason = document.getElementById('reportReason');
+        const reportDetails = document.getElementById('reportDetails');
+        const submitReportButton = document.getElementById('submitReportButton');
+        const cancelReportButton = document.getElementById('cancelReportButton');
+
 
         // Firestore collection paths (public data as per instructions)
         let CHATS_COLLECTION_PATH;
         let USERS_ONLINE_COLLECTION_PATH;
+        let REPORTS_COLLECTION_PATH; // New collection for reports
 
         // Function to scroll to the bottom of the chat window
         const scrollToBottom = () => {
@@ -116,16 +236,18 @@
 
             messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
-                // Determine alignment based on sender type (user or partner)
                 let alignmentClass = '';
                 let bubbleClass = '';
+                let senderLabel = '';
 
                 if (msg.senderId === userId) {
                     alignmentClass = 'justify-end';
                     bubbleClass = 'bg-indigo-500 text-white rounded-br-none';
+                    senderLabel = 'You';
                 } else {
                     alignmentClass = 'justify-start';
                     bubbleClass = 'bg-gray-600 text-gray-100 rounded-bl-none';
+                    senderLabel = msg.senderNickname || 'Stranger'; // Use senderNickname
                 }
 
                 messageDiv.className = `flex ${alignmentClass}`;
@@ -133,16 +255,50 @@
                 const messageBubble = document.createElement('div');
                 messageBubble.className = `max-w-[70%] p-3 rounded-lg shadow-md ${bubbleClass}`;
 
-                const messageText = document.createElement('p');
-                messageText.className = 'text-sm';
-                messageText.textContent = msg.text;
+                const senderSpan = document.createElement('span');
+                senderSpan.className = 'block text-xs font-bold mb-1 opacity-80';
+                senderSpan.textContent = senderLabel;
+
+                messageBubble.appendChild(senderSpan);
+
+                // Handle different message types (text, photo, photo request)
+                if (msg.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = msg.imageUrl;
+                    img.alt = 'Shared Image';
+                    img.className = 'max-w-full h-auto rounded-md mt-1';
+                    messageBubble.appendChild(img);
+                    const caption = document.createElement('p');
+                    caption.className = 'text-sm mt-1';
+                    caption.textContent = msg.text || 'Image shared.'; // Use text as caption
+                    messageBubble.appendChild(caption);
+                } else if (msg.type === 'photo_request') {
+                    const requestText = document.createElement('p');
+                    requestText.className = 'text-sm italic text-gray-300';
+                    requestText.textContent = msg.senderId === userId ? "You requested a photo." : `${senderLabel} requested a photo.`;
+                    messageBubble.appendChild(requestText);
+
+                    if (msg.senderId !== userId) { // Only show 'Share Photo' button to the recipient
+                        const shareButton = document.createElement('button');
+                        shareButton.textContent = "Share Photo";
+                        shareButton.className = "mt-2 bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400";
+                        shareButton.onclick = () => handleSharePhoto(msg.id); // Pass message ID for potential tracking
+                        messageBubble.appendChild(shareButton);
+                    }
+                }
+                else {
+                    const messageText = document.createElement('p');
+                    messageText.className = 'text-sm';
+                    messageText.textContent = msg.text;
+                    messageBubble.appendChild(messageText);
+                }
+
 
                 const messageTimestamp = document.createElement('span');
                 messageTimestamp.className = 'block text-xs text-right mt-1 opacity-75';
-                messageTimestamp.textContent = new Date(msg.timestamp).toLocaleTimeString();
+                messageTimestamp.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 
-                messageBubble.appendChild(messageText);
                 messageBubble.appendChild(messageTimestamp);
                 messageDiv.appendChild(messageBubble);
                 messagesContainer.appendChild(messageDiv);
@@ -150,13 +306,13 @@
             scrollToBottom();
         };
 
-        // Function to update user's online status in Firestore
+        // Function to update user's online status in Firestore (including nickname)
         const updateUserOnlineStatus = async (status) => {
             if (!userId || !db || !USERS_ONLINE_COLLECTION_PATH) return;
             const userDocRef = doc(db, USERS_ONLINE_COLLECTION_PATH, userId);
             try {
                 if (status === 'online') {
-                    await setDoc(userDocRef, { timestamp: Date.now() });
+                    await setDoc(userDocRef, { timestamp: Date.now(), nickname: userNickname || "Stranger" });
                 } else if (status === 'offline') {
                     await deleteDoc(userDocRef);
                 }
@@ -177,11 +333,8 @@
             }
             if (currentChatId) {
                 try {
-                    // Mark the chat as ended or delete it
                     const chatDocRef = doc(db, CHATS_COLLECTION_PATH, currentChatId);
                     await updateDoc(chatDocRef, { status: 'ended' });
-                    // Optionally, delete the chat document and its messages after a delay or based on policy
-                    // For now, just mark as ended.
                 } catch (error) {
                     console.error("Error ending chat:", error);
                 }
@@ -189,13 +342,12 @@
             currentChatId = null;
             messages = []; // Clear messages array
             renderMessages(); // Clear messages from UI
-            initialSection.classList.remove('hidden');
-            startChatButton.classList.remove('hidden');
+            nicknameSection.classList.remove('hidden'); // Show nickname section again
+            setNicknameButton.textContent = 'Start Chat'; // Reset button text
             waitingMessage.classList.add('hidden');
             chatSection.classList.add('hidden');
             updateUserOnlineStatus('offline'); // Ensure user is removed from online list
         };
-
 
         // Function to find or create a chat
         const findOrCreateChat = async () => {
@@ -203,12 +355,14 @@
                 console.error("Firebase not initialized or userId not set.");
                 return;
             }
+            if (!isAgeConfirmed) {
+                ageConfirmationModal.classList.remove('hidden');
+                return;
+            }
 
-            // Clear previous chat state and reset UI
-            endCurrentChat(); // This will clear 'messages' and reset UI elements
+            endCurrentChat(); // Clear previous chat state and reset UI
 
-            initialSection.classList.remove('hidden');
-            startChatButton.classList.add('hidden');
+            nicknameSection.classList.add('hidden');
             waitingMessage.classList.remove('hidden');
             chatSection.classList.add('hidden');
 
@@ -216,21 +370,28 @@
             try {
                 // Look for an available partner
                 const usersOnlineRef = collection(db, USERS_ONLINE_COLLECTION_PATH);
-                const q = query(usersOnlineRef);
+                const q = query(usersOnlineRef, where("nickname", "!=", userNickname)); // Try to find someone with a different nickname
                 const onlineUsersSnapshot = await getDocs(q);
 
                 let foundPartnerId = null;
-                onlineUsersSnapshot.forEach(doc => {
-                    if (doc.id !== userId) { // Don't match with self
-                        foundPartnerId = doc.id;
-                        return; // Exit forEach early
+                let foundPartnerNickname = null;
+
+                for (const docSnapshot of onlineUsersSnapshot.docs) {
+                    if (docSnapshot.id !== userId) { // Don't match with self
+                        foundPartnerId = docSnapshot.id;
+                        foundPartnerNickname = docSnapshot.data().nickname || 'Stranger';
+                        break; // Exit loop early
                     }
-                });
+                }
+
 
                 if (foundPartnerId) {
                     // Found a partner, create a new chat
                     const newChatRef = await addDoc(collection(db, CHATS_COLLECTION_PATH), {
-                        users: [userId, foundPartnerId],
+                        users: {
+                            [userId]: userNickname,
+                            [foundPartnerId]: foundPartnerNickname
+                        },
                         createdAt: Date.now(),
                         status: 'active'
                     });
@@ -240,31 +401,21 @@
                     startListeningToChat();
                 } else {
                     // No partner found, add self to waiting list
-                    await updateUserOnlineStatus('online');
-                    // Listen for changes in online users to detect a new partner
-                    userStatusUnsubscribe = onSnapshot(usersOnlineRef, async (snapshot) => {
-                        let newPartnerFound = false;
-                        snapshot.docChanges().forEach(change => {
-                            if (change.type === 'added' && change.doc.id !== userId) {
-                                newPartnerFound = change.doc.id;
-                            }
-                        });
-                        // Instead of re-running findOrCreateChat, we'll set up a listener
-                        // for chats that include us.
-                    });
+                    await updateUserOnlineStatus('online'); // Includes nickname
+                    waitingMessage.textContent = "Waiting for a chat partner...";
 
-                    // Also, listen for any chat documents that include the current user
+                    // Listen for any chat documents that include the current user
                     const chatsRef = collection(db, CHATS_COLLECTION_PATH);
-                    const qUserChats = query(chatsRef, where("users", "array-contains", userId), where("status", "==", "active"));
+                    const qUserChats = query(chatsRef, where(`users.${userId}`, "!=", null), where("status", "==", "active"));
                     chatUnsubscribe = onSnapshot(qUserChats, (snapshot) => {
                         snapshot.docChanges().forEach(change => {
                             if (change.type === 'added' || (change.type === 'modified' && change.doc.data().status === 'active')) {
                                 const chatData = change.doc.data();
-                                if (chatData.users.includes(userId)) {
+                                // Check if this chat includes us and is active
+                                if (chatData.users.hasOwnProperty(userId)) {
                                     currentChatId = change.doc.id;
                                     startListeningToChat();
-                                    // Ensure we remove ourselves from the online list once a chat is established
-                                    updateUserOnlineStatus('offline');
+                                    updateUserOnlineStatus('offline'); // Remove from online list once chat established
                                     if (userStatusUnsubscribe) {
                                         userStatusUnsubscribe();
                                         userStatusUnsubscribe = null;
@@ -280,7 +431,8 @@
             } catch (error) {
                 console.error("Error finding or creating chat:", error);
                 waitingMessage.textContent = "Error finding partner. Please try again.";
-                startChatButton.classList.remove('hidden');
+                nicknameSection.classList.remove('hidden');
+                setNicknameButton.classList.remove('hidden');
             }
         };
 
@@ -300,8 +452,9 @@
             }
 
             // Hide initial section, show chat section
-            initialSection.classList.add('hidden');
+            nicknameSection.classList.add('hidden');
             chatSection.classList.remove('hidden');
+            nextChatButton.textContent = 'End & Next Chat'; // Ensure button text is correct when chat starts
 
             // Listen for messages in the current chat
             const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
@@ -330,7 +483,9 @@
                     await addDoc(messagesRef, {
                         text: inputVal,
                         senderId: userId,
-                        timestamp: Date.now()
+                        senderNickname: userNickname, // Include nickname
+                        timestamp: Date.now(),
+                        type: 'text' // Add message type
                     });
                     messageInput.value = ''; // Clear input field
                 } catch (error) {
@@ -339,23 +494,173 @@
             }
         };
 
+        // Function to handle photo request
+        const requestPhoto = async () => {
+            if (currentChatId && userId) {
+                try {
+                    const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+                    await addDoc(messagesRef, {
+                        text: `${userNickname} requested a photo.`,
+                        senderId: userId,
+                        senderNickname: userNickname,
+                        timestamp: Date.now(),
+                        type: 'photo_request'
+                    });
+                } catch (error) {
+                    console.error("Error sending photo request:", error);
+                }
+            } else {
+                alert("You must be in a chat to request a photo.");
+            }
+        };
+
+        // Function to handle sharing a photo (triggered by "Share Photo" button)
+        const handleSharePhoto = async (messageId) => {
+            if (!currentChatId || !userId || !storage) {
+                alert("Cannot share photo: Not in a chat or storage not initialized.");
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*'; // Accept only image files
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    try {
+                        const storageRef = ref(storage, `chat_images/${currentChatId}/${userId}/${Date.now()}_${file.name}`);
+                        const uploadTask = uploadBytesResumable(storageRef, file);
+
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                // Optional: monitor upload progress
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                console.log('Upload is ' + progress + '% done');
+                            },
+                            (error) => {
+                                console.error("Image upload failed:", error);
+                                alert("Failed to upload image.");
+                            },
+                            async () => {
+                                // Upload complete, get the download URL
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                console.log('File available at', downloadURL);
+
+                                // Send the image URL as a message
+                                const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+                                await addDoc(messagesRef, {
+                                    text: 'Shared a photo.',
+                                    imageUrl: downloadURL,
+                                    senderId: userId,
+                                    senderNickname: userNickname,
+                                    timestamp: Date.now(),
+                                    type: 'image' // Mark as image message
+                                });
+                            }
+                        );
+                    } catch (error) {
+                        console.error("Error uploading image:", error);
+                        alert("Error uploading image.");
+                    }
+                }
+            };
+            input.click(); // Programmatically click the file input
+        };
+
+
+        // Function to submit a report
+        const submitReport = async () => {
+            if (!currentChatId || !userId) {
+                alert("Cannot submit report: Not in a chat or user not identified.");
+                return;
+            }
+
+            const reason = reportReason.value;
+            const details = reportDetails.value.trim();
+
+            if (!reason) {
+                alert("Please select a reason for the report.");
+                return;
+            }
+
+            try {
+                const reportsRef = collection(db, REPORTS_COLLECTION_PATH);
+                await addDoc(reportsRef, {
+                    reporterId: userId,
+                    reportedChatId: currentChatId,
+                    reason: reason,
+                    details: details,
+                    timestamp: serverTimestamp() // Use server timestamp for accuracy
+                });
+                alert("Report submitted successfully.");
+                reportModal.classList.add('hidden');
+                reportDetails.value = ''; // Clear details
+                reportReason.value = 'Inappropriate Content'; // Reset dropdown
+            } catch (error) {
+                console.error("Error submitting report:", error);
+                alert("Failed to submit report. Please try again.");
+            }
+        };
+
         // Event Listeners
-        startChatButton.addEventListener('click', findOrCreateChat);
+        setNicknameButton.addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            userNickname = nickname === "" ? "Stranger" : nickname;
+            userIdDisplay.textContent = userNickname;
+            findOrCreateChat(); // Initiate chat after setting nickname and age confirmation
+        });
+
+        // Age confirmation button handlers
+        confirmAgeButton.addEventListener('click', () => {
+            isAgeConfirmed = true;
+            ageConfirmationModal.classList.add('hidden');
+            findOrCreateChat(); // Re-attempt chat after confirmation
+        });
+        cancelAgeButton.addEventListener('click', () => {
+            isAgeConfirmed = false;
+            ageConfirmationModal.classList.add('hidden');
+            // User cancelled age confirmation, so they can't proceed to chat
+            nicknameSection.classList.remove('hidden');
+            waitingMessage.classList.add('hidden');
+            setNicknameButton.textContent = 'Start Chat';
+        });
+
+
+        // "End & Next Chat" button handler
+        nextChatButton.addEventListener('click', () => {
+            if (currentChatId) { // If currently in a chat, show confirmation
+                skipChatConfirmationModal.classList.remove('hidden');
+            } else { // If not in a chat (e.g., after initial start), just find new
+                findOrCreateChat();
+            }
+        });
+
+        // Skip chat confirmation button handlers
+        confirmSkipButton.addEventListener('click', () => {
+            skipChatConfirmationModal.classList.add('hidden');
+            findOrCreateChat(); // End current chat and find new
+        });
+        cancelSkipButton.addEventListener('click', () => {
+            skipChatConfirmationModal.classList.add('hidden');
+            // Do nothing, user decided not to skip
+        });
+
+
         messageForm.addEventListener('submit', sendMessage);
-        nextChatButton.addEventListener('click', findOrCreateChat); // Next chat also finds/creates a new one
+        requestPhotoButton.addEventListener('click', requestPhoto);
+        reportButton.addEventListener('click', () => reportModal.classList.remove('hidden'));
+        submitReportButton.addEventListener('click', submitReport);
+        cancelReportButton.addEventListener('click', () => reportModal.classList.add('hidden'));
 
 
         // Firebase Initialization and Authentication
         window.onload = async function() {
             try {
-                // Access global variables provided by the Canvas environment
+                // Access global variables provided by the Canvas environment (if available)
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                // The __firebase_config variable is for specific hosting environments.
-                // We're now providing the config directly for broader compatibility.
-                let firebaseConfig;
 
-                // YOUR FIREBASE CONFIGURATION GOES HERE
-                firebaseConfig = {
+                // YOUR FIREBASE CONFIGURATION
+                const firebaseConfig = {
                     apiKey: "AIzaSyDm4xiubyMVvmp-l84h7GYIhWbsepfhToY",
                     authDomain: "randomchat365-e66a9.firebaseapp.com",
                     projectId: "randomchat365-e66a9",
@@ -365,51 +670,35 @@
                     measurementId: "G-NHB99TPWE5"
                 };
 
-                // Check if the parsed config is empty or lacks essential properties
-                if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
-                    console.error("Firebase configuration is missing essential properties (apiKey, projectId).");
-                    userIdDisplay.textContent = 'Firebase Config Missing/Invalid. Cannot connect.';
-                    return; // Stop execution if config is missing
-                }
-
-
-                // Define Firestore collection paths using appId
-                // It's good practice to ensure appId is correctly set before using it in paths
-                // If __app_id isn't available, the 'default-app-id' will be used,
-                // or you could use a fixed string directly if you don't need app-specific paths.
-                CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
-                USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
-
                 // Initialize Firebase app
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                storage = getStorage(app); // Initialize Firebase Storage
+
+                // Define Firestore collection paths using appId
+                CHATS_COLLECTION_PATH = `/artifacts/${appId}/public/data/chats`;
+                USERS_ONLINE_COLLECTION_PATH = `/artifacts/${appId}/public/data/users_online`;
+                REPORTS_COLLECTION_PATH = `/artifacts/${appId}/public/data/reports`;
+
 
                 // Listen for authentication state changes
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // User is signed in
                         userId = user.uid;
-                        userIdDisplay.textContent = userId;
-                        // Initial state: show start chat button
-                        initialSection.classList.remove('hidden');
-                        startChatButton.classList.remove('hidden');
-                        waitingMessage.classList.add('hidden');
+                        // Display initial nickname or default 'Stranger'
+                        userIdDisplay.textContent = userNickname;
+                        // Show nickname input section
+                        nicknameSection.classList.remove('hidden');
                         chatSection.classList.add('hidden');
                     } else {
-                        // No user is signed in, attempt anonymous sign-in or custom token sign-in
                         try {
-                            // `initialAuthToken` is typically provided by a server-side authentication process.
-                            // If you're running this purely client-side without a custom token provider,
-                            // `signInAnonymously` is the way to go.
-                            if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
+                            // Attempt anonymous sign-in
+                            await signInAnonymously(auth);
                         } catch (error) {
                             console.error("Firebase authentication error:", error);
                             userIdDisplay.textContent = 'Error getting User ID';
+                            alert("Failed to authenticate with Firebase. Please try again later.");
                         }
                     }
                 });
@@ -424,6 +713,7 @@
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
                 userIdDisplay.textContent = 'Error initializing Firebase';
+                alert("Failed to initialize Firebase. Please check your console for errors.");
             }
         };
     </script>
